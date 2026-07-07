@@ -1,11 +1,13 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { formatMoney } from '../utils/formatMoney';
-import { colors, spacing, typography } from '../theme';
+import { colors, radii, spacing, typography } from '../theme';
 
 interface LedgerEntryListProps {
   entries: LedgerEntry[];
   emptyMessage?: string;
+  onDelete?: (entry: LedgerEntry) => void;
 }
 
 function formatDate(iso: string): string {
@@ -18,9 +20,28 @@ function formatDate(iso: string): string {
   });
 }
 
+function EntryRow({ item }: { item: LedgerEntry }) {
+  return (
+    <View style={styles.row}>
+      <View style={styles.left}>
+        <Text style={styles.reason}>{item.reason}</Text>
+        <Text style={styles.meta}>
+          {formatDate(item.createdAt)}
+          {item.loggedByName ? ` · ${item.loggedByName}` : ''}
+        </Text>
+      </View>
+      <Text style={[styles.amount, item.amountDelta < 0 && styles.amountNegative]}>
+        {item.amountDelta > 0 ? '+' : ''}
+        {formatMoney(item.amountDelta)}
+      </Text>
+    </View>
+  );
+}
+
 export function LedgerEntryList({
   entries,
   emptyMessage = 'Nothing logged yet this week.',
+  onDelete,
 }: LedgerEntryListProps) {
   if (entries.length === 0) {
     return (
@@ -36,18 +57,26 @@ export function LedgerEntryList({
       keyExtractor={(item) => item.id}
       scrollEnabled={false}
       contentContainerStyle={styles.list}
-      renderItem={({ item }) => (
-        <View style={styles.row}>
-          <View style={styles.left}>
-            <Text style={styles.reason}>{item.reason}</Text>
-            <Text style={styles.meta}>{formatDate(item.createdAt)}</Text>
-          </View>
-          <Text style={[styles.amount, item.amountDelta < 0 && styles.amountNegative]}>
-            {item.amountDelta > 0 ? '+' : ''}
-            {formatMoney(item.amountDelta)}
-          </Text>
-        </View>
-      )}
+      renderItem={({ item }) => {
+        if (!onDelete) {
+          return <EntryRow item={item} />;
+        }
+
+        return (
+          <Swipeable
+            renderRightActions={() => (
+              <Pressable style={styles.deleteAction} onPress={() => onDelete(item)}>
+                <Text style={styles.deleteLabel}>Delete</Text>
+              </Pressable>
+            )}
+            overshootRight={false}
+          >
+            <View style={styles.swipeableRow}>
+              <EntryRow item={item} />
+            </View>
+          </Swipeable>
+        );
+      }}
     />
   );
 }
@@ -63,6 +92,9 @@ const styles = StyleSheet.create({
   emptyText: {
     ...typography.caption,
     fontSize: 16,
+  },
+  swipeableRow: {
+    backgroundColor: colors.background,
   },
   row: {
     flexDirection: 'row',
@@ -91,5 +123,19 @@ const styles = StyleSheet.create({
   },
   amountNegative: {
     color: colors.negative,
+  },
+  deleteAction: {
+    backgroundColor: colors.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 88,
+    marginBottom: 1,
+    borderTopRightRadius: radii.md,
+    borderBottomRightRadius: radii.md,
+  },
+  deleteLabel: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

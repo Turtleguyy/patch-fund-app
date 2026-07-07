@@ -67,7 +67,7 @@ function KidsStackNavigator() {
       <KidsStack.Screen
         name="ManageChildren"
         component={ManageChildrenScreen}
-        options={{ title: 'Kids' }}
+        options={{ title: 'Household' }}
       />
       <KidsStack.Screen
         name="AddChild"
@@ -108,7 +108,11 @@ export function MainTabs() {
       <Tab.Screen
         name="KidsTab"
         component={KidsStackNavigator}
-        options={{ title: 'Kids', tabBarLabel: 'Kids', tabBarIcon: tabIcon('people', 'people-outline') }}
+        options={{
+          title: 'Household',
+          tabBarLabel: 'Household',
+          tabBarIcon: tabIcon('people', 'people-outline'),
+        }}
       />
     </Tab.Navigator>
   );

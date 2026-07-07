@@ -1,6 +1,12 @@
 import { PendingSiriEntry } from '../services/siriEntryService';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+export type AuthStackParamList = {
+  SignIn: undefined;
+  SetDisplayName: undefined;
+  HouseholdOnboarding: undefined;
+};
+
 export type HomeStackParamList = {
   Home: undefined;
   Adjustment: { childId: string };

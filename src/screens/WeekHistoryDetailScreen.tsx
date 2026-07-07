@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LedgerEntryList } from '../components/LedgerEntryList';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { WeekHistoryItem } from '../models/WeekSummary';
@@ -39,6 +39,28 @@ export function WeekHistoryDetailScreen({ route }: Props) {
     }, [load]),
   );
 
+  const handleDeleteEntry = useCallback((entry: LedgerEntry) => {
+    const amountLabel = `${entry.amountDelta > 0 ? '+' : ''}${formatMoney(entry.amountDelta)}`;
+    Alert.alert('Delete entry?', `${entry.reason} (${amountLabel})`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await allowanceService.deleteEntry(entry.id);
+            setEntries((prev) => prev.filter((item) => item.id !== entry.id));
+          } catch (error) {
+            Alert.alert(
+              'Error',
+              error instanceof Error ? error.message : 'Could not delete entry.',
+            );
+          }
+        },
+      },
+    ]);
+  }, []);
+
   if (loading || !week) {
     return (
       <View style={styles.centered}>
@@ -61,7 +83,7 @@ export function WeekHistoryDetailScreen({ route }: Props) {
       </View>
 
       <Text style={styles.sectionTitle}>Entries</Text>
-      <LedgerEntryList entries={entries} emptyMessage="No entries this week." />
+      <LedgerEntryList entries={entries} emptyMessage="No entries this week." onDelete={handleDeleteEntry} />
     </ScrollView>
   );
 }

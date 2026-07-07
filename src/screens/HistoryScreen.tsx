@@ -18,6 +18,7 @@ import { formatMoney } from '../utils/formatMoney';
 import { formatWeekRange } from '../utils/weekUtils';
 import { HistoryStackParamList } from '../navigation/types';
 import { balanceColors, colors, radii, spacing, typography } from '../theme';
+import { useCloudSync } from '../hooks/useCloudSync';
 
 type Props = NativeStackScreenProps<HistoryStackParamList, 'History'>;
 
@@ -59,6 +60,8 @@ export function HistoryScreen({ navigation }: Props) {
     }, [load]),
   );
 
+  useCloudSync(load);
+
   const handleSelectChild = useCallback(
     async (childId: string) => {
       await allowanceService.selectChild(childId);
@@ -82,7 +85,7 @@ export function HistoryScreen({ navigation }: Props) {
       <View style={styles.centered}>
         <Text style={styles.emptyTitle}>No kids yet</Text>
         <Text style={styles.emptySubtitle}>Add a child to see past weeks.</Text>
-        <PrimaryButton label="Go to Kids" onPress={() => navigation.getParent()?.navigate('KidsTab')} />
+        <PrimaryButton label="Go to Household" onPress={() => navigation.getParent()?.navigate('KidsTab')} />
       </View>
     );
   }

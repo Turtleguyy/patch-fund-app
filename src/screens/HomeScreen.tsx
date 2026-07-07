@@ -19,6 +19,8 @@ import { Child } from '../models/Child';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { allowanceService } from '../services/allowanceService';
 import { calculateWeeklyBalance } from '../utils/weekUtils';
+import { formatMoney } from '../utils/formatMoney';
+import { useCloudSync } from '../hooks/useCloudSync';
 import { HomeStackParamList, MainTabParamList } from '../navigation/types';
 import { colors, spacing, typography } from '../theme';
 
@@ -54,6 +56,8 @@ export function HomeScreen({ navigation }: Props) {
       };
     }, [load]),
   );
+
+  useCloudSync(load);
 
   const selectedChild = useMemo(
     () => children.find((child) => child.id === selectedChildId) ?? null,
@@ -108,6 +112,28 @@ export function HomeScreen({ navigation }: Props) {
     );
   }, [selectedChild]);
 
+  const handleDeleteEntry = useCallback((entry: LedgerEntry) => {
+    const amountLabel = `${entry.amountDelta > 0 ? '+' : ''}${formatMoney(entry.amountDelta)}`;
+    Alert.alert('Delete entry?', `${entry.reason} (${amountLabel})`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await allowanceService.deleteEntry(entry.id);
+            setEntries((prev) => prev.filter((item) => item.id !== entry.id));
+          } catch (error) {
+            Alert.alert(
+              'Error',
+              error instanceof Error ? error.message : 'Could not delete entry.',
+            );
+          }
+        },
+      },
+    ]);
+  }, []);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -121,7 +147,7 @@ export function HomeScreen({ navigation }: Props) {
       <View style={styles.centered}>
         <Text style={styles.emptyTitle}>No kids yet</Text>
         <Text style={styles.emptySubtitle}>Add a child to start tracking allowance.</Text>
-        <PrimaryButton label="Go to Kids" onPress={() => navigation.navigate('KidsTab')} />
+        <PrimaryButton label="Go to Household" onPress={() => navigation.navigate('KidsTab')} />
       </View>
     );
   }
@@ -153,7 +179,7 @@ export function HomeScreen({ navigation }: Props) {
         <PrimaryButton label="Start new week" variant="secondary" onPress={handleCloseWeek} />
 
         <Text style={styles.sectionTitle}>Entries</Text>
-        <LedgerEntryList entries={currentWeekEntries} />
+        <LedgerEntryList entries={currentWeekEntries} onDelete={handleDeleteEntry} />
       </ScrollView>
     </View>
   );

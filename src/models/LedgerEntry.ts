@@ -8,6 +8,8 @@ export interface LedgerEntry {
   category?: string;
   createdAt: string;
   source: LedgerEntrySource;
+  loggedByUserId?: string;
+  loggedByName?: string;
 }
 
 export interface CreateLedgerEntryInput {
