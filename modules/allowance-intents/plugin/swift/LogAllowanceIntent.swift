@@ -14,7 +14,6 @@ enum AllowanceIntentSupport {
   }
 }
 
-@available(iOS 16.0, *)
 struct AddDollarIntent: AppIntent {
   static var title: LocalizedStringResource = "Add a Dollar"
   static var description = IntentDescription("Add one dollar to a child's allowance.")
@@ -26,7 +25,6 @@ struct AddDollarIntent: AppIntent {
   }
 }
 
-@available(iOS 16.0, *)
 struct TakeDollarIntent: AppIntent {
   static var title: LocalizedStringResource = "Take a Dollar"
   static var description = IntentDescription("Take one dollar from a child's allowance.")

@@ -13,6 +13,28 @@ const SWIFT_FILES = [
   'AllowanceShortcuts.swift',
 ];
 
+function patchAppDelegate(appDelegatePath) {
+  if (!fs.existsSync(appDelegatePath)) return;
+
+  let contents = fs.readFileSync(appDelegatePath, 'utf8');
+  if (contents.includes('AllowanceShortcuts.updateAppShortcutParameters')) return;
+
+  if (!contents.includes('import AppIntents')) {
+    contents = contents.replace('import React', 'import React\nimport AppIntents');
+  }
+
+  contents = contents.replace(
+    'return super.application(application, didFinishLaunchingWithOptions: launchOptions)',
+    `if #available(iOS 17.0, *) {
+      AllowanceShortcuts.updateAppShortcutParameters()
+    }
+
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)`,
+  );
+
+  fs.writeFileSync(appDelegatePath, contents);
+}
+
 function withAllowanceIntents(config, props = {}) {
   const appGroup = props.appGroup ?? 'group.com.zach.patchfund';
   const siriDeepLink = props.siriDeepLink ?? 'patchfund://siri/log';
@@ -41,6 +63,8 @@ function withAllowanceIntents(config, props = {}) {
         fs.writeFileSync(path.join(destDir, fileName), contents);
       }
 
+      patchAppDelegate(path.join(projectRoot, projectName, 'AppDelegate.swift'));
+
       return config;
     },
   ]);
@@ -64,4 +88,4 @@ function withAllowanceIntents(config, props = {}) {
   return config;
 }
 
-module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents');
+module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents', '1.1.0');
