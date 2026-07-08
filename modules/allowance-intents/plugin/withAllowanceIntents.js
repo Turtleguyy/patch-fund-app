@@ -17,22 +17,44 @@ function patchAppDelegate(appDelegatePath) {
   if (!fs.existsSync(appDelegatePath)) return;
 
   let contents = fs.readFileSync(appDelegatePath, 'utf8');
-  if (contents.includes('AllowanceShortcuts.updateAppShortcutParameters')) return;
+  let changed = false;
 
   if (!contents.includes('import AppIntents')) {
     contents = contents.replace('import React', 'import React\nimport AppIntents');
+    changed = true;
   }
 
-  contents = contents.replace(
-    'return super.application(application, didFinishLaunchingWithOptions: launchOptions)',
-    `if #available(iOS 17.0, *) {
+  if (!contents.includes('AllowanceShortcuts.updateAppShortcutParameters()')) {
+    contents = contents.replace(
+      'return super.application(application, didFinishLaunchingWithOptions: launchOptions)',
+      `if #available(iOS 17.0, *) {
       AllowanceShortcuts.updateAppShortcutParameters()
     }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)`,
-  );
+    );
+    changed = true;
+  }
 
-  fs.writeFileSync(appDelegatePath, contents);
+  if (!contents.includes('applicationDidBecomeActive')) {
+    contents = contents.replace(
+      /(\n\}\n\nclass ReactNativeDelegate)/,
+      `
+
+  public override func applicationDidBecomeActive(_ application: UIApplication) {
+    super.applicationDidBecomeActive(application)
+    if #available(iOS 17.0, *) {
+      AllowanceShortcuts.updateAppShortcutParameters()
+    }
+  }
+$1`,
+    );
+    changed = true;
+  }
+
+  if (changed) {
+    fs.writeFileSync(appDelegatePath, contents);
+  }
 }
 
 function withAllowanceIntents(config, props = {}) {
@@ -41,6 +63,7 @@ function withAllowanceIntents(config, props = {}) {
 
   config = withEntitlementsPlist(config, (config) => {
     config.modResults['com.apple.security.application-groups'] = [appGroup];
+    config.modResults['com.apple.developer.siri'] = true;
     return config;
   });
 
@@ -88,4 +111,4 @@ function withAllowanceIntents(config, props = {}) {
   return config;
 }
 
-module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents', '1.1.0');
+module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents', '1.4.0');

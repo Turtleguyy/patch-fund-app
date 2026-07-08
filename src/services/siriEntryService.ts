@@ -3,6 +3,7 @@ import { Child } from '../models/Child';
 import { ParsedAllowanceEntry } from '../models/ParsedAllowanceEntry';
 import { parseAllowanceEntryWithAI } from './aiParserService';
 import { allowanceService } from './allowanceService';
+import { storageService } from './storageService';
 
 export interface PendingSiriEntry {
   spokenText: string;
@@ -11,9 +12,18 @@ export interface PendingSiriEntry {
   childName: string;
 }
 
-export function syncChildrenToAppGroup(children: Child[]): void {
+export function syncChildrenToAppGroup(children: Child[], selectedChildId?: string | null): void {
   const payload = children.map((child) => ({ id: child.id, name: child.name }));
   setSharedString(APP_GROUP_KEYS.childrenJson, JSON.stringify(payload));
+
+  if (selectedChildId !== undefined) {
+    setSharedString(APP_GROUP_KEYS.selectedChildId, selectedChildId);
+    return;
+  }
+
+  void storageService.getSelectedChildId().then((id) => {
+    setSharedString(APP_GROUP_KEYS.selectedChildId, id);
+  });
 }
 
 export function resolveChildId(
@@ -49,7 +59,7 @@ export async function consumePendingSiriEntry(): Promise<PendingSiriEntry | null
   setSharedString(APP_GROUP_KEYS.pendingSiriText, null);
 
   const { children, selectedChildId } = await allowanceService.loadAppState();
-  syncChildrenToAppGroup(children);
+  syncChildrenToAppGroup(children, selectedChildId);
 
   const parsed = await parseAllowanceEntryWithAI(
     spokenText,
@@ -58,7 +68,14 @@ export async function consumePendingSiriEntry(): Promise<PendingSiriEntry | null
 
   const resolved = resolveChildId(parsed, children, selectedChildId);
   if (!resolved) {
-    return null;
+    const fallback = children[0];
+    if (!fallback) return null;
+    return {
+      spokenText,
+      parsed: { ...parsed, needsConfirmation: true },
+      childId: fallback.id,
+      childName: fallback.name,
+    };
   }
 
   return {

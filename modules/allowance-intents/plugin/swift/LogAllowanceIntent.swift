@@ -14,24 +14,27 @@ enum AllowanceIntentSupport {
   }
 }
 
-struct AddDollarIntent: AppIntent {
-  static var title: LocalizedStringResource = "Add a Dollar"
-  static var description = IntentDescription("Add one dollar to a child's allowance.")
+struct LogEntryIntent: AppIntent {
+  static var title: LocalizedStringResource = "Log Entry"
+  static var description = IntentDescription(
+    "Log an allowance entry by voice. Say add or take, the amount, child, and reason."
+  )
   static var openAppWhenRun: Bool = true
+
+  @Parameter(
+    title: "What to log",
+    description: "For example: add five dollars for mowing the lawn"
+  )
+  var entry: String
 
   @MainActor
   func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: await AllowanceIntentSupport.openApp(with: "add a dollar"))
-  }
-}
-
-struct TakeDollarIntent: AppIntent {
-  static var title: LocalizedStringResource = "Take a Dollar"
-  static var description = IntentDescription("Take one dollar from a child's allowance.")
-  static var openAppWhenRun: Bool = true
-
-  @MainActor
-  func perform() async throws -> some IntentResult & ProvidesDialog {
-    .result(dialog: await AllowanceIntentSupport.openApp(with: "take a dollar"))
+    let text = entry.trimmingCharacters(in: .whitespacesAndNewlines)
+    if text.isEmpty {
+      throw $entry.needsValueError(
+        "Try something like add five dollars for mowing the lawn, or take two dollars from Emma for talking back."
+      )
+    }
+    return .result(dialog: await AllowanceIntentSupport.openApp(with: text))
   }
 }

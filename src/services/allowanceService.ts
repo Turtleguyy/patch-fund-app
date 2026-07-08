@@ -87,6 +87,15 @@ export const allowanceService = {
 
   async selectChild(childId: string): Promise<void> {
     await storageService.setSelectedChildId(childId);
+    if (isCloudMode()) {
+      const householdId = getActiveHouseholdId()!;
+      const { children } = await cloudAllowanceRepository.fetchHouseholdState(householdId);
+      syncChildrenToAppGroup(children, childId);
+      return;
+    }
+
+    const children = await storageService.getChildren();
+    syncChildrenToAppGroup(children, childId);
   },
 
   async addChild(name: string, weeklyStartingAmount = DEFAULT_WEEKLY_STARTING_AMOUNT): Promise<Child> {

@@ -37,17 +37,39 @@ Child switching appears on Home only when you have more than one kid.
 
 ### Siri shortcuts
 
-Requires a **development or release build** (not Expo Go). Phrases include:
+Requires a **development or release build** (not Expo Go).
 
-- "Add a dollar in Patch Fund" / "to Patch Fund" / etc.
-- "Take a dollar from Patch Fund" / etc.
+**How to use**
 
-Siri writes the spoken phrase to a shared App Group. When the app opens, it parses the phrase (OpenAI when configured, with a local rules fallback), resolves the child, and either:
+1. Say **"Patch Fund"** (or **"Update Patch Fund"**) to Siri.
+2. Siri asks **what to log** — say a full natural-language entry, for example:
+   - "add five dollars for mowing the lawn"
+   - "take two dollars from Emma for talking back"
+3. The app opens, parses your phrase, and saves or shows a confirmation screen.
 
-- Saves immediately if confidence is high, or
-- Shows a **From Siri** confirmation screen to review before saving.
+**Parsing**
 
-Children names are synced to the App Group so Siri can target the right kid when multiple children exist.
+The full spoken phrase is sent to the parser (OpenAI when `EXPO_PUBLIC_OPENAI_API_KEY` is set, otherwise local rules). It extracts:
+
+- **Amount** — signed (`+` earned, `-` deducted)
+- **Child** — if you named one
+- **Reason** — e.g. chore or behavior note
+- **Confidence** — whether to ask before saving
+
+**Child resolution** (when you don't name a kid in the phrase):
+
+1. Child named in the phrase (matched against your household)
+2. Child currently selected on Home
+3. Only child in the household
+4. Otherwise → **From Siri** confirmation screen to review before saving
+
+The app also syncs children and the selected child to the App Group so Siri and the parser know who is in the household.
+
+**First-time setup on device**
+
+After installing, enable **Turn on Patch Fund shortcuts** in Settings → Siri (or when iOS prompts). If shortcuts don't appear after a rebuild, delete and reinstall the app so Siri re-indexes phrases.
+
+Shortcut phrases and the Siri prompt text live in `modules/allowance-intents/plugin/swift/` (`AllowanceShortcuts.swift`, `LogAllowanceIntent.swift`). Run `npm run prebuild` after editing them.
 
 ### Household sync (Supabase)
 

@@ -22,12 +22,19 @@ function normalizeInput(input: string): string {
   return input.trim().replace(/\s+/g, ' ');
 }
 
-function extractReason(text: string): string {
+function extractReason(text: string, childName?: string): string {
   const becauseMatch = text.match(/\bbecause\b(.+)$/i);
   if (becauseMatch?.[1]) return becauseMatch[1].trim();
 
   const forMatch = text.match(/\bfor\b(.+)$/i);
-  if (forMatch?.[1]) return forMatch[1].trim();
+  if (forMatch?.[1]) {
+    let reason = forMatch[1].trim();
+    if (childName) {
+      const escaped = childName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      reason = reason.replace(new RegExp(`^${escaped}\\s*(?:for\\s+)?`, 'i'), '').trim();
+    }
+    if (reason) return reason;
+  }
 
   return text.trim();
 }
@@ -123,7 +130,7 @@ export function parseAllowanceEntry(
   const { amount, confidence: amountConfidence } = parseAmount(text);
   const { sign, confidence: directionConfidence } = detectDirection(text);
   const childName = extractChildName(text, knownChildNames);
-  const reason = extractReason(text);
+  const reason = extractReason(text, childName);
 
   let confidence = Math.min(amountConfidence, directionConfidence);
   if (childName) confidence = Math.min(1, confidence + 0.05);

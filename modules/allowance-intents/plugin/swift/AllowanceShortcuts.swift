@@ -1,29 +1,19 @@
 import AppIntents
 
 struct AllowanceShortcuts: AppShortcutsProvider {
+  static var shortcutTileColor: ShortcutTileColor = .pink
+
   @AppShortcutsBuilder
   static var appShortcuts: [AppShortcut] {
     AppShortcut(
-      intent: AddDollarIntent(),
+      intent: LogEntryIntent(),
       phrases: [
-        "Add a dollar in \(.applicationName)",
-        "Add a dollar with \(.applicationName)",
-        "Add a dollar to \(.applicationName)",
-        "Add a dollar to the \(.applicationName)",
+        "\(.applicationName)",
+        "Update \(.applicationName)",
+        "Update the \(.applicationName)",
       ],
-      shortTitle: "Add a Dollar",
+      shortTitle: "Log Entry",
       systemImageName: "plus.circle"
-    )
-    AppShortcut(
-      intent: TakeDollarIntent(),
-      phrases: [
-        "Take a dollar in \(.applicationName)",
-        "Take a dollar with \(.applicationName)",
-        "Take a dollar from \(.applicationName)",
-        "Take a dollar from the \(.applicationName)",
-      ],
-      shortTitle: "Take a Dollar",
-      systemImageName: "minus.circle"
     )
   }
 }

@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 export const APP_GROUP_KEYS = {
   pendingSiriText: 'pending_siri_text',
   childrenJson: 'children_json',
+  selectedChildId: 'selected_child_id',
 } as const;
 
 type AllowanceIntentsNativeModule = {
