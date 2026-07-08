@@ -1,5 +1,5 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -11,14 +11,19 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { EntrySuggestionRow } from '../components/EntrySuggestionRow';
 import { FormField, formStyles } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { LedgerEntry } from '../models/LedgerEntry';
 import { allowanceService } from '../services/allowanceService';
+import { LogDirection, storageService } from '../services/storageService';
+import { EntrySuggestion, getTopEntrySuggestions } from '../utils/entrySuggestions';
 import { HomeStackParamList } from '../navigation/types';
 import { colors, radii, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Adjustment'>;
-type Direction = 'add' | 'take';
+type Direction = LogDirection;
 
 export function AdjustmentScreen({ route, navigation }: Props) {
   const { childId } = route.params;
@@ -26,6 +31,42 @@ export function AdjustmentScreen({ route, navigation }: Props) {
   const [amountText, setAmountText] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
+  const [entries, setEntries] = useState<LedgerEntry[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void Promise.all([
+        allowanceService.loadAppState(),
+        storageService.getLastLogDirection(),
+      ]).then(([state, lastDirection]) => {
+        if (!active) return;
+        setEntries(state.entries.filter((entry) => entry.childId === childId));
+        setDirection(lastDirection);
+      });
+      return () => {
+        active = false;
+      };
+    }, [childId]),
+  );
+
+  const handleDirectionChange = useCallback((next: Direction) => {
+    setDirection(next);
+    void storageService.setLastLogDirection(next);
+  }, []);
+
+  const suggestions = useMemo(
+    () => getTopEntrySuggestions(entries, childId),
+    [entries, childId],
+  );
+
+  const applySuggestion = useCallback((suggestion: EntrySuggestion) => {
+    const nextDirection: Direction = suggestion.amountDelta >= 0 ? 'add' : 'take';
+    setDirection(nextDirection);
+    void storageService.setLastLogDirection(nextDirection);
+    setAmountText(String(Math.abs(suggestion.amountDelta)));
+    setReason(suggestion.reason);
+  }, []);
 
   const handleSave = useCallback(async () => {
     const amount = Number(amountText);
@@ -42,6 +83,7 @@ export function AdjustmentScreen({ route, navigation }: Props) {
 
     setSaving(true);
     try {
+      await storageService.setLastLogDirection(direction);
       await allowanceService.addEntry({
         childId,
         amountDelta,
@@ -65,17 +107,24 @@ export function AdjustmentScreen({ route, navigation }: Props) {
         <Text style={styles.title}>Log an entry</Text>
         <Text style={styles.subtitle}>Add money earned or take some away.</Text>
 
+        {suggestions.length > 0 ? (
+          <>
+            <Text style={styles.suggestionsLabel}>Suggestions</Text>
+            <EntrySuggestionRow suggestions={suggestions} onSelect={applySuggestion} />
+          </>
+        ) : null}
+
         <View style={styles.directionRow}>
           <DirectionButton
             label="Add"
             selected={direction === 'add'}
-            onPress={() => setDirection('add')}
+            onPress={() => handleDirectionChange('add')}
             tone="positive"
           />
           <DirectionButton
             label="Take"
             selected={direction === 'take'}
-            onPress={() => setDirection('take')}
+            onPress={() => handleDirectionChange('take')}
             tone="negative"
           />
         </View>
@@ -161,6 +210,13 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontSize: 16,
     marginBottom: spacing.lg,
+  },
+  suggestionsLabel: {
+    ...typography.label,
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
   },
   directionRow: {
     flexDirection: 'row',

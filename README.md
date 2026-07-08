@@ -10,11 +10,17 @@ Built with **Expo SDK 56**, **React Native**, and a custom native module for Sir
 
 - Shows the **current week's allowance** as the hero element (large balance, green when positive / red when negative).
 - **Log an entry** — add or take money with an amount and a short note ("What for?").
+- **Quick log** — after you've logged a few times, the three most common amount + note combos for the selected child appear as one-tap buttons below **Log an entry** (saves immediately).
 - **Start new week** — closes the current week (saves a summary to history) and resets the child to their weekly starting allowance. Past entries are kept.
 - Lists **this week's entries** (reason, date, amount, and who logged it when using household sync).
 - **Swipe left** on an entry to delete it (with confirmation).
 
 Child switching appears on Home only when you have more than one kid.
+
+### Log an entry
+
+- **Add** / **Take** toggle defaults to whichever you used last.
+- **Suggestions** — the same top-three common entries appear as chips at the top; tap one to prefill amount and note (you can edit before saving).
 
 ### Household (tab)
 
@@ -147,7 +153,7 @@ npm run ios -- --device
 
 On first launch you'll see the **Expo Dev Client** launcher. Tap **Patch Fund** to load JS from Metro. Grant **Local Network** if the dev server doesn't appear.
 
-After changing Swift files under `modules/allowance-intents/plugin/swift/`, rebuild the native app. Keep `ios/PatchFund/AppIntents/` in sync if you edit shortcuts there directly.
+After changing Swift files under `modules/allowance-intents/plugin/swift/`, rebuild the native app. Keep `ios/PatchFund/AppIntents/` in sync if you edit shortcuts there directly. The config plugin prunes removed Swift files from the Xcode project on prebuild.
 
 ### 6. Release build & TestFlight
 
@@ -215,7 +221,7 @@ Removing a child deletes their entries and week summaries.
 ```
 src/
   screens/          # Home, Adjustment, History, Household, auth, Siri confirm, etc.
-  components/       # BalanceCard, ChildSelector, LedgerEntryList, …
+  components/       # BalanceCard, ChildSelector, EntrySuggestionRow, LedgerEntryList, …
   services/         # allowance, storage, household, auth, profile, Siri, AI parser
   context/          # AuthProvider (session, household, profile)
   navigation/       # Tab + stack navigators, deep linking

@@ -14,10 +14,13 @@ import {
 import { BalanceCard } from '../components/BalanceCard';
 import { ChildSelector } from '../components/ChildSelector';
 import { LedgerEntryList } from '../components/LedgerEntryList';
+import { EntrySuggestionRow } from '../components/EntrySuggestionRow';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { Child } from '../models/Child';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { allowanceService } from '../services/allowanceService';
+import { storageService } from '../services/storageService';
+import { EntrySuggestion, getTopEntrySuggestions } from '../utils/entrySuggestions';
 import { calculateWeeklyBalance } from '../utils/weekUtils';
 import { formatMoney } from '../utils/formatMoney';
 import { useCloudSync } from '../hooks/useCloudSync';
@@ -35,6 +38,7 @@ export function HomeScreen({ navigation }: Props) {
   const [children, setChildren] = useState<Child[]>([]);
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [quickLogging, setQuickLogging] = useState(false);
 
   const load = useCallback(async () => {
     const state = await allowanceService.loadAppState();
@@ -80,6 +84,11 @@ export function HomeScreen({ navigation }: Props) {
     return calculateWeeklyBalance(selectedChild.weeklyStartingAmount, currentWeekEntries);
   }, [selectedChild, currentWeekEntries]);
 
+  const quickSuggestions = useMemo(() => {
+    if (!selectedChild) return [];
+    return getTopEntrySuggestions(entries, selectedChild.id);
+  }, [entries, selectedChild]);
+
   const handleSelectChild = useCallback(async (childId: string) => {
     await allowanceService.selectChild(childId);
     setSelectedChildId(childId);
@@ -111,6 +120,29 @@ export function HomeScreen({ navigation }: Props) {
       ],
     );
   }, [selectedChild]);
+
+  const handleQuickLog = useCallback(
+    async (suggestion: EntrySuggestion) => {
+      if (!selectedChild || quickLogging) return;
+
+      setQuickLogging(true);
+      try {
+        await storageService.setLastLogDirection(suggestion.amountDelta >= 0 ? 'add' : 'take');
+        const entry = await allowanceService.addEntry({
+          childId: selectedChild.id,
+          amountDelta: suggestion.amountDelta,
+          reason: suggestion.reason,
+          source: 'manual',
+        });
+        setEntries((prev) => [entry, ...prev]);
+      } catch (error) {
+        Alert.alert('Error', error instanceof Error ? error.message : 'Could not save entry.');
+      } finally {
+        setQuickLogging(false);
+      }
+    },
+    [selectedChild, quickLogging],
+  );
 
   const handleDeleteEntry = useCallback((entry: LedgerEntry) => {
     const amountLabel = `${entry.amountDelta > 0 ? '+' : ''}${formatMoney(entry.amountDelta)}`;
@@ -176,6 +208,18 @@ export function HomeScreen({ navigation }: Props) {
           label="Log an entry"
           onPress={() => navigation.navigate('Adjustment', { childId: selectedChild.id })}
         />
+
+        {quickSuggestions.length > 0 ? (
+          <>
+            <Text style={styles.quickLogLabel}>Quick log</Text>
+            <EntrySuggestionRow
+              suggestions={quickSuggestions}
+              onSelect={handleQuickLog}
+              disabled={quickLogging}
+            />
+          </>
+        ) : null}
+
         <PrimaryButton label="Start new week" variant="secondary" onPress={handleCloseWeek} />
 
         <Text style={styles.sectionTitle}>Entries</Text>
@@ -206,6 +250,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  quickLogLabel: {
+    ...typography.label,
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: spacing.sm,
   },
   emptyTitle: {

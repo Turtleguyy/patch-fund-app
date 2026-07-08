@@ -13,6 +13,30 @@ const SWIFT_FILES = [
   'AllowanceShortcuts.swift',
 ];
 
+function pruneStaleAppIntentFiles(projectRoot, projectName, destDir) {
+  if (!fs.existsSync(destDir)) return;
+
+  const staleFiles = fs
+    .readdirSync(destDir)
+    .filter((file) => file.endsWith('.swift') && !SWIFT_FILES.includes(file));
+
+  if (staleFiles.length === 0) return;
+
+  for (const file of staleFiles) {
+    fs.unlinkSync(path.join(destDir, file));
+  }
+
+  const pbxprojPath = path.join(projectRoot, `${projectName}.xcodeproj`, 'project.pbxproj');
+  if (!fs.existsSync(pbxprojPath)) return;
+
+  const lines = fs
+    .readFileSync(pbxprojPath, 'utf8')
+    .split('\n')
+    .filter((line) => !staleFiles.some((file) => line.includes(file)));
+
+  fs.writeFileSync(pbxprojPath, lines.join('\n'));
+}
+
 function patchAppDelegate(appDelegatePath) {
   if (!fs.existsSync(appDelegatePath)) return;
 
@@ -76,6 +100,7 @@ function withAllowanceIntents(config, props = {}) {
       const sourceDir = path.join(__dirname, 'swift');
 
       fs.mkdirSync(destDir, { recursive: true });
+      pruneStaleAppIntentFiles(projectRoot, projectName, destDir);
 
       for (const fileName of SWIFT_FILES) {
         const sourcePath = path.join(sourceDir, fileName);
@@ -111,4 +136,4 @@ function withAllowanceIntents(config, props = {}) {
   return config;
 }
 
-module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents', '1.4.0');
+module.exports = createRunOncePlugin(withAllowanceIntents, 'withAllowanceIntents', '1.5.0');

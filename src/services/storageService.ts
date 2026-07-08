@@ -7,8 +7,11 @@ const KEYS = {
   children: '@allowance/children',
   entries: '@allowance/entries',
   selectedChildId: '@allowance/selectedChildId',
+  lastLogDirection: '@allowance/lastLogDirection',
   weekSummaries: '@allowance/weekSummaries',
 } as const;
+
+export type LogDirection = 'add' | 'take';
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {
   const raw = await AsyncStorage.getItem(key);
@@ -47,6 +50,15 @@ export const storageService = {
 
   async clearSelectedChildId(): Promise<void> {
     await AsyncStorage.removeItem(KEYS.selectedChildId);
+  },
+
+  async getLastLogDirection(): Promise<LogDirection> {
+    const value = await AsyncStorage.getItem(KEYS.lastLogDirection);
+    return value === 'take' ? 'take' : 'add';
+  },
+
+  async setLastLogDirection(direction: LogDirection): Promise<void> {
+    await AsyncStorage.setItem(KEYS.lastLogDirection, direction);
   },
 
   async getWeekSummaries(): Promise<WeekSummary[]> {
