@@ -91,8 +91,8 @@ Shortcut phrases and the Siri prompt text live in `modules/allowance-intents/plu
 
 When `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set:
 
-- **Sign in with Apple** on first launch.
-- **Set your name** (from Apple when available, or enter it manually).
+- **Sign in** with Apple (iOS) or Google (native account picker) — each provider is a separate account (no linking).
+- **Set your name** (from the provider when available, or enter it manually).
 - **Create a household** or **join** with a 6-character invite code from another parent.
 - Children, entries, and week history sync through Supabase with **real-time updates** between devices.
 - Each entry records **which parent logged it** (by display name).
@@ -106,7 +106,7 @@ See **[supabase/SETUP.md](supabase/SETUP.md)** for dashboard configuration (incl
 
 | Requirement | Notes |
 |-------------|--------|
-| **Dev or release build** | Uses `expo-dev-client`, native Siri module, Sign in with Apple — **Expo Go will not work**. |
+| **Dev or release build** | Uses `expo-dev-client`, native Siri module, Sign in with Apple, native Google Sign-In — **Expo Go will not work**. |
 | **Physical iPhone** | Siri App Intents and App Groups need a real device (simulator has limitations). |
 | **Apple Developer account** | App Groups, Siri, device installs, and TestFlight. |
 | **Node.js** | LTS recommended. |
@@ -129,8 +129,10 @@ Copy `.env.example` to `.env` and fill in:
 | `EXPO_PUBLIC_OPENAI_API_KEY` | Optional | Improves Siri phrase parsing. Without it, a local rules-based parser is used. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Household sync | Supabase project URL (Project Settings → API). |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Household sync | Supabase anon/public key. |
+| `EXPO_PUBLIC_GOOGLE_AUTH_WEB_CLIENT_ID` | Google sign-in | Web OAuth client ID (also goes in Supabase Google provider). |
+| `EXPO_PUBLIC_GOOGLE_AUTH_IOS_CLIENT_ID` | Google sign-in | iOS OAuth client ID for bundle `com.zach.patchfund`. |
 
-Never commit `.env`. Env vars are **baked in at build time** — set them before building a release or TestFlight archive.
+Never commit `.env`. Env vars are **baked in at build time** — set them before `prebuild` and building a release or TestFlight archive. After changing `.env`, restart Metro for JS; run `prebuild` and rebuild the native app when adding native modules (e.g. Google Sign-In).
 
 ### 3. Configure Supabase (household sharing)
 
@@ -141,7 +143,8 @@ Follow **[supabase/SETUP.md](supabase/SETUP.md)**:
 3. Run `migrations/003_ledger_entry_update.sql` (allows editing entry amount and reason).
 4. Enable Realtime on `children`, `ledger_entries`, `week_summaries`.
 5. Enable the Apple auth provider (add bundle ID `com.zach.patchfund`).
-6. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to `.env`.
+6. Enable Google (Web + iOS OAuth clients, **Skip nonce check**) — see [supabase/SETUP.md](supabase/SETUP.md) §3b.
+7. Add Supabase and Google client IDs to `.env` (see step 2 above).
 
 ### 4. Generate native projects
 
@@ -165,6 +168,8 @@ npm run ios -- --device
 On first launch you'll see the **Expo Dev Client** launcher. Tap **Patch Fund** to load JS from Metro. Grant **Local Network** if the dev server doesn't appear.
 
 After changing Swift files under `modules/allowance-intents/plugin/swift/`, rebuild the native app. Keep `ios/PatchFund/AppIntents/` in sync if you edit shortcuts there directly. The config plugin prunes removed Swift files from the Xcode project on prebuild.
+
+Google Sign-In requires the Google client IDs in `.env` **before** `prebuild` (adds the iOS URL scheme and CocoaPods config). If `pod install` fails on Google pods, the `withGoogleSignInPods` plugin adds the required modular headers.
 
 ### 6. Release build & TestFlight
 
@@ -233,7 +238,7 @@ Removing a child deletes their entries and week summaries.
 src/
   screens/          # Home, Adjustment, History, Household, auth, Siri confirm, etc.
   components/       # BalanceCard, ChildSelector, EntryFormFields, EntrySuggestionRow, LedgerEntryList, …
-  services/         # allowance, storage, household, auth, profile, Siri, AI parser
+  services/         # allowance, storage, household, auth, googleSignIn, Siri, AI parser
   utils/            # entryForm, entrySuggestions, weekUtils, formatMoney
   context/          # AuthProvider (session, household, profile)
   navigation/       # Tab + stack navigators, deep linking
@@ -241,6 +246,8 @@ src/
   theme.ts          # Colors, spacing, typography
 modules/
   allowance-intents/  # Expo native module + config plugin (Siri, App Group)
+plugins/
+  withGoogleSignInPods.js  # CocoaPods fix for Google Sign-In
 supabase/
   migrations/       # SQL schema + RLS
   SETUP.md          # Dashboard setup steps
@@ -258,7 +265,7 @@ Bottom tabs:
 | **History** | calendar | Past weeks, week detail |
 | **Household** | people | Your name, invite code, manage children |
 
-Auth flow (when Supabase is configured): Sign in → Your name → Create/join household → main app.
+Auth flow (when Supabase is configured): Sign in (Apple or Google) → Your name → Create/join household → main app.
 
 Modal stack above tabs: **From Siri** confirmation when needed.
 
@@ -275,6 +282,7 @@ Modal stack above tabs: **From Siri** confirmation when needed.
 - **Editing or deleting entries from a closed week** updates the entry list but not the saved week summary ending balance (that was snapshotted at close).
 - **Week history before summaries** — inferred by calendar week; less precise than weeks closed via **Start new week**.
 - **Apple name on sign-in** — Apple only sends your full name on the very first authorization; the app prompts you to confirm or enter your name.
+- **Facebook sign-in** — not enabled yet (pending Meta app verification).
 
 ## License
 

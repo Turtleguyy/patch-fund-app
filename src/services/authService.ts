@@ -2,10 +2,27 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { formatAppleFullName, profileService } from './profileService';
+import {
+  isGoogleSignInConfigured,
+  signInWithGoogleNative,
+  signOutGoogleNative,
+} from './googleSignIn';
+
+function isUserCancelError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('ERR_REQUEST_CANCELED');
+}
 
 export const authService = {
-  isAvailable(): boolean {
+  isCloudAuthEnabled(): boolean {
+    return isSupabaseConfigured();
+  },
+
+  isAppleAvailable(): boolean {
     return isSupabaseConfigured() && Platform.OS === 'ios';
+  },
+
+  isGoogleAvailable(): boolean {
+    return isSupabaseConfigured();
   },
 
   async getSession() {
@@ -39,8 +56,15 @@ export const authService = {
     }
   },
 
+  async signInWithGoogle(): Promise<void> {
+    await signInWithGoogleNative();
+  },
+
+  isUserCancelError,
+
   async signOut(): Promise<void> {
     if (!isSupabaseConfigured()) return;
+    await signOutGoogleNative();
     const { error } = await getSupabase().auth.signOut();
     if (error) throw error;
   },

@@ -59,6 +59,42 @@ alter publication supabase_realtime add table public.week_summaries;
 
 For native iOS (`signInWithIdToken`), you typically do **not** need a Services ID secret if you only use the app on device. If sign-in fails, see [Supabase Apple auth docs](https://supabase.com/docs/guides/auth/social-login/auth-apple).
 
+## 3b. Enable Google (native sign-in)
+
+Google uses the **native iOS account picker** (shows Patch Fund, not your Supabase URL).
+
+### Google Cloud Console
+
+1. [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **Create Credentials** → **OAuth client ID**.
+2. Create a **Web application** client:
+   - Add your Supabase callback URL under **Authorized redirect URIs** (from Supabase → Authentication → Providers → Google).
+   - Copy the **Client ID** — this is `EXPO_PUBLIC_GOOGLE_AUTH_WEB_CLIENT_ID`.
+3. Create an **iOS** client:
+   - Bundle ID: `com.zach.patchfund`
+   - Copy the **Client ID** — this is `EXPO_PUBLIC_GOOGLE_AUTH_IOS_CLIENT_ID`.
+
+### Supabase
+
+1. **Authentication** → **Providers** → **Google** → enable.
+2. Paste the **Web application** Client ID and Client Secret.
+3. Enable **Skip nonce check** (required for native iOS `signInWithIdToken`).
+4. Save.
+
+### `.env`
+
+```env
+EXPO_PUBLIC_GOOGLE_AUTH_WEB_CLIENT_ID=your-web-client-id.apps.googleusercontent.com
+EXPO_PUBLIC_GOOGLE_AUTH_IOS_CLIENT_ID=your-ios-client-id.apps.googleusercontent.com
+```
+
+Rebuild the native app after adding these (`npm run prebuild`).
+
+See [Supabase Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google).
+
+## 3c. Facebook (disabled for now)
+
+Facebook sign-in is not enabled in the app until Meta business verification completes. The OAuth redirect URL `patchfund://auth/callback` can stay configured for when it is re-enabled.
+
 ## 4. Add API keys to `.env`
 
 In Supabase: **Project Settings** → **API**
@@ -72,7 +108,7 @@ Copy from `.env.example` if needed. Restart Metro after changing `.env`.
 
 ## 5. Rebuild the native app
 
-Apple Sign In and any native config changes require a new dev build:
+Apple Sign In and native Google Sign-In require a new dev build:
 
 ```bash
 npm run prebuild
@@ -115,6 +151,7 @@ If `expo run:ios` fails with errors about `com.apple.developer.applesignin`:
 | Apple sign-in fails | Rebuild native app; confirm bundle ID in Supabase Apple provider. |
 | Build error: provisioning profile does not support Sign In with Apple | Enable **Sign In with Apple** on App ID `com.zach.patchfund` in Apple Developer, then refresh signing in Xcode (see [supabase/SETUP.md](supabase/SETUP.md)). |
 | No live updates | Enable Realtime on the three tables (step 2). |
+| Google sign-in fails | Confirm Web + iOS client IDs in `.env`, **Skip nonce check** enabled in Supabase, and rebuild after `prebuild`. |
 | App skips sign-in | Supabase env vars missing — app falls back to local-only mode. |
 | RLS errors on insert | User must be in `household_members` for that household (create or join first). |
 
