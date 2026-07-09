@@ -1,4 +1,4 @@
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { formatMoney } from '../utils/formatMoney';
@@ -8,6 +8,8 @@ interface LedgerEntryListProps {
   entries: LedgerEntry[];
   emptyMessage?: string;
   onDelete?: (entry: LedgerEntry) => void;
+  scrollEnabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 function formatDate(iso: string): string {
@@ -42,6 +44,8 @@ export function LedgerEntryList({
   entries,
   emptyMessage = 'Nothing logged yet this week.',
   onDelete,
+  scrollEnabled = false,
+  style,
 }: LedgerEntryListProps) {
   if (entries.length === 0) {
     return (
@@ -55,7 +59,8 @@ export function LedgerEntryList({
     <FlatList
       data={entries}
       keyExtractor={(item) => item.id}
-      scrollEnabled={false}
+      scrollEnabled={scrollEnabled}
+      style={style}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => {
         if (!onDelete) {

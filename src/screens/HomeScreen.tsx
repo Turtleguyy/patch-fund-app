@@ -9,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { BalanceCard } from '../components/BalanceCard';
@@ -33,6 +34,8 @@ type Props = CompositeScreenProps<
 >;
 
 export function HomeScreen({ navigation }: Props) {
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [children, setChildren] = useState<Child[]>([]);
@@ -186,45 +189,65 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-      >
-        <BalanceCard
-          childName={selectedChild.name}
-          balance={balance}
-          weeklyStartingAmount={selectedChild.weeklyStartingAmount}
-        />
-
-        {children.length > 1 ? (
-          <ChildSelector
-            children={children}
-            selectedChildId={selectedChild.id}
-            onSelect={handleSelectChild}
+      <View style={[styles.layout, isLandscape && styles.layoutLandscape]}>
+        <ScrollView
+          style={isLandscape ? styles.landscapeSidebar : undefined}
+          contentContainerStyle={[styles.content, isLandscape && styles.landscapeSidebarContent]}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        >
+          <BalanceCard
+            childName={selectedChild.name}
+            balance={balance}
+            weeklyStartingAmount={selectedChild.weeklyStartingAmount}
+            compact={isLandscape}
           />
-        ) : null}
 
-        <PrimaryButton
-          label="Log an entry"
-          onPress={() => navigation.navigate('Adjustment', { childId: selectedChild.id })}
-        />
-
-        {quickSuggestions.length > 0 ? (
-          <>
-            <Text style={styles.quickLogLabel}>Quick log</Text>
-            <EntrySuggestionRow
-              suggestions={quickSuggestions}
-              onSelect={handleQuickLog}
-              disabled={quickLogging}
+          {children.length > 1 ? (
+            <ChildSelector
+              children={children}
+              selectedChildId={selectedChild.id}
+              onSelect={handleSelectChild}
             />
-          </>
+          ) : null}
+
+          <PrimaryButton
+            label="Log an entry"
+            onPress={() => navigation.navigate('Adjustment', { childId: selectedChild.id })}
+          />
+
+          {quickSuggestions.length > 0 ? (
+            <>
+              <Text style={styles.quickLogLabel}>Quick log</Text>
+              <EntrySuggestionRow
+                suggestions={quickSuggestions}
+                onSelect={handleQuickLog}
+                disabled={quickLogging}
+              />
+            </>
+          ) : null}
+
+          <PrimaryButton label="Start new week" variant="secondary" onPress={handleCloseWeek} />
+
+          {!isLandscape ? (
+            <>
+              <Text style={styles.sectionTitle}>Entries</Text>
+              <LedgerEntryList entries={currentWeekEntries} onDelete={handleDeleteEntry} />
+            </>
+          ) : null}
+        </ScrollView>
+
+        {isLandscape ? (
+          <View style={styles.landscapeEntriesPane}>
+            <Text style={[styles.sectionTitle, styles.landscapeSectionTitle]}>Entries</Text>
+            <LedgerEntryList
+              entries={currentWeekEntries}
+              onDelete={handleDeleteEntry}
+              scrollEnabled
+              style={styles.landscapeEntriesList}
+            />
+          </View>
         ) : null}
-
-        <PrimaryButton label="Start new week" variant="secondary" onPress={handleCloseWeek} />
-
-        <Text style={styles.sectionTitle}>Entries</Text>
-        <LedgerEntryList entries={currentWeekEntries} onDelete={handleDeleteEntry} />
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -234,9 +257,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  layout: {
+    flex: 1,
+  },
+  layoutLandscape: {
+    flexDirection: 'row',
+  },
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
+  },
+  landscapeSidebar: {
+    width: '40%',
+    maxWidth: 340,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+  },
+  landscapeSidebarContent: {
+    paddingBottom: spacing.lg,
+  },
+  landscapeEntriesPane: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  landscapeEntriesList: {
+    flex: 1,
+  },
+  landscapeSectionTitle: {
+    marginTop: spacing.lg,
   },
   centered: {
     flex: 1,

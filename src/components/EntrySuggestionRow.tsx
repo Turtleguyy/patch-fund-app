@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { EntrySuggestion, formatSuggestionAmount } from '../utils/entrySuggestions';
 import { colors, radii, spacing, typography } from '../theme';
 
@@ -16,7 +16,12 @@ export function EntrySuggestionRow({
   if (suggestions.length === 0) return null;
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+      style={styles.scroll}
+    >
       {suggestions.map((suggestion) => {
         const amountColor = suggestion.amountDelta >= 0 ? colors.positive : colors.danger;
         const key = `${suggestion.amountDelta}-${suggestion.reason}`;
@@ -41,14 +46,18 @@ export function EntrySuggestionRow({
           </Pressable>
         );
       })}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: spacing.sm,
+  scroll: {
     marginBottom: spacing.sm,
+    marginHorizontal: -spacing.lg,
+  },
+  scrollContent: {
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   chip: {
     flexDirection: 'row',
@@ -58,8 +67,9 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: spacing.md,
+    maxWidth: 220,
   },
   chipPressed: {
     backgroundColor: colors.surfaceMuted,
@@ -68,13 +78,13 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   amount: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    minWidth: 56,
   },
   reason: {
     ...typography.body,
-    flex: 1,
-    fontSize: 16,
+    flexShrink: 1,
+    fontSize: 15,
+    maxWidth: 140,
   },
 });

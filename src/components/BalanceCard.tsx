@@ -6,17 +6,33 @@ interface BalanceCardProps {
   childName: string;
   balance: number;
   weeklyStartingAmount: number;
+  compact?: boolean;
 }
 
-export function BalanceCard({ childName, balance, weeklyStartingAmount }: BalanceCardProps) {
+export function BalanceCard({
+  childName,
+  balance,
+  weeklyStartingAmount,
+  compact = false,
+}: BalanceCardProps) {
   const tone = balanceColors(balance);
 
   return (
-    <View style={[styles.card, { backgroundColor: tone.surface, borderColor: tone.border }]}>
-      <Text style={styles.childName}>{childName}</Text>
+    <View
+      style={[
+        styles.card,
+        compact && styles.cardCompact,
+        { backgroundColor: tone.surface, borderColor: tone.border },
+      ]}
+    >
+      <Text style={[styles.childName, compact && styles.childNameCompact]}>{childName}</Text>
       <Text style={styles.label}>Allowance this week</Text>
-      <Text style={[styles.balance, { color: tone.amount }]}>{formatMoney(balance)}</Text>
-      <Text style={styles.subtitle}>Started at {formatMoney(weeklyStartingAmount)}</Text>
+      <Text style={[styles.balance, compact && styles.balanceCompact, { color: tone.amount }]}>
+        {formatMoney(balance)}
+      </Text>
+      <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
+        Started at {formatMoney(weeklyStartingAmount)}
+      </Text>
     </View>
   );
 }
@@ -30,10 +46,17 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
   },
+  cardCompact: {
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.md,
+  },
   childName: {
     ...typography.heading,
     fontSize: 20,
     marginBottom: spacing.xs,
+  },
+  childNameCompact: {
+    fontSize: 18,
   },
   label: {
     ...typography.caption,
@@ -48,9 +71,18 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
     lineHeight: 76,
   },
+  balanceCompact: {
+    fontSize: 44,
+    lineHeight: 48,
+    letterSpacing: -1,
+  },
   subtitle: {
     marginTop: spacing.md,
     ...typography.caption,
     fontSize: 15,
+  },
+  subtitleCompact: {
+    marginTop: spacing.sm,
+    fontSize: 14,
   },
 });
