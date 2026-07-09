@@ -42,7 +42,9 @@ function HomeStackNavigator() {
       <HomeStack.Screen
         name="Adjustment"
         component={AdjustmentScreen}
-        options={{ title: 'Log entry' }}
+        options={({ route }) => ({
+          title: route.params.entryId ? 'Edit entry' : 'Log entry',
+        })}
       />
     </HomeStack.Navigator>
   );
@@ -56,6 +58,11 @@ function HistoryStackNavigator() {
         name="WeekHistoryDetail"
         component={WeekHistoryDetailScreen}
         options={{ title: 'Week details' }}
+      />
+      <HistoryStack.Screen
+        name="EditEntry"
+        component={AdjustmentScreen}
+        options={{ title: 'Edit entry' }}
       />
     </HistoryStack.Navigator>
   );

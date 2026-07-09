@@ -169,6 +169,13 @@ export function HomeScreen({ navigation }: Props) {
     ]);
   }, []);
 
+  const handleEditEntry = useCallback(
+    (entry: LedgerEntry) => {
+      navigation.navigate('Adjustment', { childId: entry.childId, entryId: entry.id });
+    },
+    [navigation],
+  );
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -231,7 +238,11 @@ export function HomeScreen({ navigation }: Props) {
           {!isLandscape ? (
             <>
               <Text style={styles.sectionTitle}>Entries</Text>
-              <LedgerEntryList entries={currentWeekEntries} onDelete={handleDeleteEntry} />
+              <LedgerEntryList
+                entries={currentWeekEntries}
+                onPress={handleEditEntry}
+                onDelete={handleDeleteEntry}
+              />
             </>
           ) : null}
         </ScrollView>
@@ -241,6 +252,7 @@ export function HomeScreen({ navigation }: Props) {
             <Text style={[styles.sectionTitle, styles.landscapeSectionTitle]}>Entries</Text>
             <LedgerEntryList
               entries={currentWeekEntries}
+              onPress={handleEditEntry}
               onDelete={handleDeleteEntry}
               scrollEnabled
               style={styles.landscapeEntriesList}

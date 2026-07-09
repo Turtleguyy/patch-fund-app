@@ -335,6 +335,28 @@ export const cloudAllowanceRepository = {
     return mapEntry(data as LedgerEntryRow, memberNames);
   },
 
+  async updateEntry(
+    entryId: string,
+    updates: Pick<LedgerEntry, 'amountDelta' | 'reason'>,
+  ): Promise<LedgerEntry> {
+    const { data, error } = await getSupabase()
+      .from('ledger_entries')
+      .update({
+        amount_delta: updates.amountDelta,
+        reason: updates.reason,
+      })
+      .eq('id', entryId)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    const householdId = getActiveHouseholdId();
+    const memberNames = householdId
+      ? await profileService.getHouseholdMemberNames(householdId)
+      : new Map();
+    return mapEntry(data as LedgerEntryRow, memberNames);
+  },
+
   async deleteEntry(entryId: string): Promise<void> {
     const { error } = await getSupabase().from('ledger_entries').delete().eq('id', entryId);
     if (error) throw error;

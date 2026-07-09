@@ -13,14 +13,18 @@ Built with **Expo SDK 56**, **React Native**, and a custom native module for Sir
 - **Quick log** — after you've logged a few times, the three most common amount + note combos for the selected child appear as one-tap buttons below **Log an entry** (saves immediately).
 - **Start new week** — closes the current week (saves a summary to history) and resets the child to their weekly starting allowance. Past entries are kept.
 - Lists **this week's entries** (reason, date, amount, and who logged it when using household sync).
+- **Tap an entry** to edit the amount or note.
 - **Swipe left** on an entry to delete it (with confirmation).
+- In **landscape**, balance and actions stay on the left; entries scroll on the right.
 
 Child switching appears on Home only when you have more than one kid.
 
 ### Log an entry
 
-- **Add** / **Take** toggle defaults to whichever you used last.
-- **Suggestions** — the same top-three common entries appear as chips at the top; tap one to prefill amount and note (you can edit before saving).
+Used when you tap **Log an entry** on Home or when you **tap an existing entry** to edit it.
+
+- **Add** / **Take** toggle defaults to whichever you used last (create only; edit keeps the entry's direction).
+- **Suggestions** — the same top-three common entries appear as chips at the top when creating; tap one to prefill amount and note (you can edit before saving).
 
 ### Household (tab)
 
@@ -38,6 +42,7 @@ Organized in sections: **You**, **Sharing** (when signed in), **Voice**, and **K
 - Past weeks for the selected child, newest first.
 - Each row shows the date range, starting allowance, and **ending balance**.
 - Tap a week to see its entries and ending total.
+- **Tap an entry** to edit the amount or note.
 - **Swipe left** to delete entries from that week.
 - Weeks are recorded when you tap **Start new week** on Home.
 - Older entries from before week summaries existed are grouped by calendar week as a best-effort fallback.
@@ -52,7 +57,7 @@ Requires a **development or release build** (not Expo Go).
 2. Siri asks **what to log** — say a full natural-language entry, for example:
    - "add five dollars for mowing the lawn"
    - "take two dollars from Harper for talking back"
-3. The app opens, parses your phrase, and saves or shows a confirmation screen.
+3. The app opens, parses your phrase, and saves or shows a **From Siri** confirmation screen where you can adjust add/take, amount, and note before saving.
 
 **Parsing**
 
@@ -133,9 +138,10 @@ Follow **[supabase/SETUP.md](supabase/SETUP.md)**:
 
 1. Run `migrations/001_household_schema.sql` in the Supabase SQL Editor.
 2. Run `migrations/002_parent_attribution.sql` (parent names on entries).
-3. Enable Realtime on `children`, `ledger_entries`, `week_summaries`.
-4. Enable the Apple auth provider (add bundle ID `com.zach.patchfund`).
-5. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to `.env`.
+3. Run `migrations/003_ledger_entry_update.sql` (allows editing entry amount and reason).
+4. Enable Realtime on `children`, `ledger_entries`, `week_summaries`.
+5. Enable the Apple auth provider (add bundle ID `com.zach.patchfund`).
+6. Add `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` to `.env`.
 
 ### 4. Generate native projects
 
@@ -226,8 +232,9 @@ Removing a child deletes their entries and week summaries.
 ```
 src/
   screens/          # Home, Adjustment, History, Household, auth, Siri confirm, etc.
-  components/       # BalanceCard, ChildSelector, EntrySuggestionRow, LedgerEntryList, …
+  components/       # BalanceCard, ChildSelector, EntryFormFields, EntrySuggestionRow, LedgerEntryList, …
   services/         # allowance, storage, household, auth, profile, Siri, AI parser
+  utils/            # entryForm, entrySuggestions, weekUtils, formatMoney
   context/          # AuthProvider (session, household, profile)
   navigation/       # Tab + stack navigators, deep linking
   models/           # Child, LedgerEntry, WeekSummary, Profile
@@ -265,8 +272,7 @@ Modal stack above tabs: **From Siri** confirmation when needed.
 ## Known limitations
 
 - **iOS-first** — Siri and App Groups are iOS-only; Android package exists but is not the focus.
-- **No edit for individual ledger entries** — add, view, and delete only.
-- **Deleting entries from a closed week** updates the entry list but not the saved week summary ending balance (that was snapshotted at close).
+- **Editing or deleting entries from a closed week** updates the entry list but not the saved week summary ending balance (that was snapshotted at close).
 - **Week history before summaries** — inferred by calendar week; less precise than weeks closed via **Start new week**.
 - **Apple name on sign-in** — Apple only sends your full name on the very first authorization; the app prompts you to confirm or enter your name.
 

@@ -13,7 +13,7 @@ import { balanceColors, colors, radii, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<HistoryStackParamList, 'WeekHistoryDetail'>;
 
-export function WeekHistoryDetailScreen({ route }: Props) {
+export function WeekHistoryDetailScreen({ route, navigation }: Props) {
   const { childId, weekId } = route.params;
   const [loading, setLoading] = useState(true);
   const [week, setWeek] = useState<WeekHistoryItem | null>(null);
@@ -61,6 +61,13 @@ export function WeekHistoryDetailScreen({ route }: Props) {
     ]);
   }, []);
 
+  const handleEditEntry = useCallback(
+    (entry: LedgerEntry) => {
+      navigation.navigate('EditEntry', { childId: entry.childId, entryId: entry.id });
+    },
+    [navigation],
+  );
+
   if (loading || !week) {
     return (
       <View style={styles.centered}>
@@ -83,7 +90,12 @@ export function WeekHistoryDetailScreen({ route }: Props) {
       </View>
 
       <Text style={styles.sectionTitle}>Entries</Text>
-      <LedgerEntryList entries={entries} emptyMessage="No entries this week." onDelete={handleDeleteEntry} />
+      <LedgerEntryList
+        entries={entries}
+        emptyMessage="No entries this week."
+        onPress={handleEditEntry}
+        onDelete={handleDeleteEntry}
+      />
     </ScrollView>
   );
 }

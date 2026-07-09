@@ -7,6 +7,7 @@ import { colors, radii, spacing, typography } from '../theme';
 interface LedgerEntryListProps {
   entries: LedgerEntry[];
   emptyMessage?: string;
+  onPress?: (entry: LedgerEntry) => void;
   onDelete?: (entry: LedgerEntry) => void;
   scrollEnabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -22,8 +23,8 @@ function formatDate(iso: string): string {
   });
 }
 
-function EntryRow({ item }: { item: LedgerEntry }) {
-  return (
+function EntryRow({ item, onPress }: { item: LedgerEntry; onPress?: (entry: LedgerEntry) => void }) {
+  const content = (
     <View style={styles.row}>
       <View style={styles.left}>
         <Text style={styles.reason}>{item.reason}</Text>
@@ -38,11 +39,25 @@ function EntryRow({ item }: { item: LedgerEntry }) {
       </Text>
     </View>
   );
+
+  if (!onPress) {
+    return content;
+  }
+
+  return (
+    <Pressable
+      onPress={() => onPress(item)}
+      style={({ pressed }) => [pressed && styles.rowPressed]}
+    >
+      {content}
+    </Pressable>
+  );
 }
 
 export function LedgerEntryList({
   entries,
   emptyMessage = 'Nothing logged yet this week.',
+  onPress,
   onDelete,
   scrollEnabled = false,
   style,
@@ -63,8 +78,10 @@ export function LedgerEntryList({
       style={style}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => {
+        const row = <EntryRow item={item} onPress={onPress} />;
+
         if (!onDelete) {
-          return <EntryRow item={item} />;
+          return row;
         }
 
         return (
@@ -76,9 +93,7 @@ export function LedgerEntryList({
             )}
             overshootRight={false}
           >
-            <View style={styles.swipeableRow}>
-              <EntryRow item={item} />
-            </View>
+            <View style={styles.swipeableRow}>{row}</View>
           </Swipeable>
         );
       }}
@@ -109,6 +124,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     gap: spacing.md,
+  },
+  rowPressed: {
+    opacity: 0.7,
   },
   left: {
     flex: 1,

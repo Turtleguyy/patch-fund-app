@@ -9,12 +9,13 @@ export type AuthStackParamList = {
 
 export type HomeStackParamList = {
   Home: undefined;
-  Adjustment: { childId: string };
+  Adjustment: { childId: string; entryId?: string };
 };
 
 export type HistoryStackParamList = {
   History: undefined;
   WeekHistoryDetail: { childId: string; weekId: string };
+  EditEntry: { childId: string; entryId: string };
 };
 
 export type KidsStackParamList = {

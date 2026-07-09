@@ -21,6 +21,16 @@ If your database was created before parent names on entries were added, run the 
 
 This lets household members read each other's display names and auto-fills `created_by` on new entries.
 
+## 1c. Entry editing (if you already ran steps 1–2 earlier)
+
+If your database was created before entry editing was added, run:
+
+1. **SQL Editor** → **New query**
+2. Paste [`migrations/003_ledger_entry_update.sql`](./migrations/003_ledger_entry_update.sql)
+3. **Run**
+
+This adds an RLS policy so household members can update entry amount and reason.
+
 ## 2. Enable Realtime (for live sync)
 
 1. Go to **Database** → **Replication** (or **Publications**).

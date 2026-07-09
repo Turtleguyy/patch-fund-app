@@ -166,6 +166,31 @@ export const allowanceService = {
     return entry;
   },
 
+  async updateEntry(
+    entryId: string,
+    updates: Pick<LedgerEntry, 'amountDelta' | 'reason'>,
+  ): Promise<LedgerEntry> {
+    if (isCloudMode()) {
+      return cloudAllowanceRepository.updateEntry(entryId, updates);
+    }
+
+    const entries = await storageService.getEntries();
+    const index = entries.findIndex((entry) => entry.id === entryId);
+    if (index === -1) {
+      throw new Error('Entry not found');
+    }
+
+    const updated: LedgerEntry = {
+      ...entries[index],
+      amountDelta: updates.amountDelta,
+      reason: updates.reason,
+    };
+    const nextEntries = [...entries];
+    nextEntries[index] = updated;
+    await storageService.saveEntries(nextEntries);
+    return updated;
+  },
+
   async deleteEntry(entryId: string): Promise<void> {
     if (isCloudMode()) {
       await cloudAllowanceRepository.deleteEntry(entryId);
