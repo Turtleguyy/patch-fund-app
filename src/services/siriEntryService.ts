@@ -57,6 +57,7 @@ export async function consumePendingSiriEntry(): Promise<PendingSiriEntry | null
   if (!spokenText) return null;
 
   setSharedString(APP_GROUP_KEYS.pendingSiriText, null);
+  void storageService.setHasLoggedViaSiri(true);
 
   const { children, selectedChildId } = await allowanceService.loadAppState();
   syncChildrenToAppGroup(children, selectedChildId);

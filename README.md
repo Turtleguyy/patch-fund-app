@@ -24,11 +24,12 @@ Child switching appears on Home only when you have more than one kid.
 
 ### Household (tab)
 
+Organized in sections: **You**, **Sharing** (when signed in), **Voice**, and **Kids**.
+
 - Set or edit **your name** — shown on entries you log so the other parent knows who added them.
-- **Household invite code** and **Share invite code** when signed in (for the other parent to join).
-- List all children with weekly allowance.
-- **Tap a child** to edit name and weekly allowance.
-- **Remove** deletes the child and all their ledger history (with confirmation).
+- **Invite code** and **Share invite code** when signed in (for the other parent to join).
+- **Log with Siri** — reopen the full Siri setup guide anytime (first launch shows a shorter version).
+- List all children with weekly allowance; tap to edit, trash icon to remove.
 - **Add a child** opens a blank form.
 - **Sign out** when using household sync.
 
@@ -50,7 +51,7 @@ Requires a **development or release build** (not Expo Go).
 1. Say **"Patch Fund"** (or **"Update Patch Fund"**) to Siri.
 2. Siri asks **what to log** — say a full natural-language entry, for example:
    - "add five dollars for mowing the lawn"
-   - "take two dollars from Emma for talking back"
+   - "take two dollars from Harper for talking back"
 3. The app opens, parses your phrase, and saves or shows a confirmation screen.
 
 **Parsing**
@@ -73,7 +74,11 @@ The app also syncs children and the selected child to the App Group so Siri and 
 
 **First-time setup on device**
 
-After installing, enable **Turn on Patch Fund shortcuts** in Settings → Siri (or when iOS prompts). If shortcuts don't appear after a rebuild, delete and reinstall the app so Siri re-indexes phrases.
+After installing, open Patch Fund at least once so iOS can register shortcuts. The app shows a short **Log with Siri** guide on first launch (enable Siri, then try the phrase). Reopen the full troubleshooting guide from **Household → Log with Siri**.
+
+In iOS Settings, go to **Apple Intelligence & Siri → Apps → Patch Fund** and turn on **Learn from this App** and the **Suggestions** toggles.
+
+Try **"Hey Siri, Patch Fund"** or search **"Log Entry"** in the Shortcuts app. Apple does not expose whether per-app shortcuts are enabled, so the in-app guide focuses on Siri permission and these settings.
 
 Shortcut phrases and the Siri prompt text live in `modules/allowance-intents/plugin/swift/` (`AllowanceShortcuts.swift`, `LogAllowanceIntent.swift`). Run `npm run prebuild` after editing them.
 

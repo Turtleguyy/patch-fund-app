@@ -7,10 +7,15 @@ export const APP_GROUP_KEYS = {
   selectedChildId: 'selected_child_id',
 } as const;
 
+export type SiriAuthorizationStatus = 'authorized' | 'denied' | 'restricted' | 'notDetermined';
+
 type AllowanceIntentsNativeModule = {
   getSharedString(key: string): string | null;
   setSharedString(key: string, value: string | null): void;
   syncChildrenJson(json: string): void;
+  getSiriAuthorizationStatus(): Promise<SiriAuthorizationStatus>;
+  requestSiriAuthorization(): Promise<SiriAuthorizationStatus>;
+  openAppSettings(): void;
 };
 
 let nativeModule: AllowanceIntentsNativeModule | null | undefined;
@@ -48,4 +53,16 @@ export function syncChildrenJson(json: string): void {
 
 export function isAllowanceIntentsAvailable(): boolean {
   return getNativeModule() != null;
+}
+
+export async function getSiriAuthorizationStatus(): Promise<SiriAuthorizationStatus | null> {
+  return (await getNativeModule()?.getSiriAuthorizationStatus()) ?? null;
+}
+
+export async function requestSiriAuthorization(): Promise<SiriAuthorizationStatus | null> {
+  return (await getNativeModule()?.requestSiriAuthorization()) ?? null;
+}
+
+export function openAppSettings(): void {
+  getNativeModule()?.openAppSettings();
 }

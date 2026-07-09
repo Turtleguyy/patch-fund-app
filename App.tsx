@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { useSiriEntryBootstrap } from './src/hooks/useSiriEntryBootstrap';
+import { SiriSetupProvider } from './src/context/SiriSetupContext';
 import { MainTabs } from './src/navigation/MainTabs';
 import { linking } from './src/navigation/linking';
 import { AuthStackParamList, RootStackParamList } from './src/navigation/types';
@@ -27,14 +28,16 @@ function MainAppNavigator({
   useSiriEntryBootstrap(navigationRef);
 
   return (
-    <RootStack.Navigator>
-      <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-      <RootStack.Screen
-        name="SiriConfirm"
-        component={SiriConfirmScreen}
-        options={{ title: 'From Siri' }}
-      />
-    </RootStack.Navigator>
+    <SiriSetupProvider>
+      <RootStack.Navigator>
+        <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+        <RootStack.Screen
+          name="SiriConfirm"
+          component={SiriConfirmScreen}
+          options={{ title: 'From Siri' }}
+        />
+      </RootStack.Navigator>
+    </SiriSetupProvider>
   );
 }
 

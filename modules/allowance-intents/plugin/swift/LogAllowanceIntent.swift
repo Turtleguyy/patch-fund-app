@@ -32,7 +32,7 @@ struct LogEntryIntent: AppIntent {
     let text = entry.trimmingCharacters(in: .whitespacesAndNewlines)
     if text.isEmpty {
       throw $entry.needsValueError(
-        "Try something like add five dollars for mowing the lawn, or take two dollars from Emma for talking back."
+        "Try something like add five dollars for mowing the lawn, or take two dollars from Harper for talking back."
       )
     }
     return .result(dialog: await AllowanceIntentSupport.openApp(with: text))
