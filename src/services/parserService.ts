@@ -39,7 +39,21 @@ function extractReason(text: string, childName?: string): string {
   return text.trim();
 }
 
-function parseAmount(text: string): { amount: number | null; confidence: number } {
+function parseAmount(text: string): {
+  amount: number | null;
+  confidence: number;
+  explicitSign?: 1 | -1;
+} {
+  const signedNumeric = text.match(/-\s*(\d+(?:\.\d{1,2})?)\s*(?:dollar|dollars|buck|bucks)\b/i);
+  if (signedNumeric) {
+    return { amount: Number(signedNumeric[1]), confidence: 0.95, explicitSign: -1 };
+  }
+
+  const signedDollar = text.match(/-\s*\$\s*(\d+(?:\.\d{1,2})?)/);
+  if (signedDollar) {
+    return { amount: Number(signedDollar[1]), confidence: 0.95, explicitSign: -1 };
+  }
+
   const dollarSignMatch = text.match(/\$\s*(\d+(?:\.\d{1,2})?)/);
   if (dollarSignMatch) {
     return { amount: Number(dollarSignMatch[1]), confidence: 0.95 };
@@ -127,17 +141,20 @@ export function parseAllowanceEntry(
     };
   }
 
-  const { amount, confidence: amountConfidence } = parseAmount(text);
+  const { amount, confidence: amountConfidence, explicitSign } = parseAmount(text);
   const { sign, confidence: directionConfidence } = detectDirection(text);
   const childName = extractChildName(text, knownChildNames);
   const reason = extractReason(text, childName);
 
-  let confidence = Math.min(amountConfidence, directionConfidence);
+  const resolvedSign = explicitSign ?? sign ?? 1;
+  let confidence = Math.min(
+    amountConfidence,
+    explicitSign !== undefined ? amountConfidence : directionConfidence,
+  );
   if (childName) confidence = Math.min(1, confidence + 0.05);
 
-  const needsConfirmation = amount === null || sign === null || confidence < 0.75;
+  const needsConfirmation = amount === null || (explicitSign === undefined && sign === null) || confidence < 0.75;
   const resolvedAmount = amount ?? 0;
-  const resolvedSign = sign ?? 1;
 
   return {
     childName,

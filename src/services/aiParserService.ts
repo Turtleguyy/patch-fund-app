@@ -69,6 +69,7 @@ export async function parseAllowanceEntryWithAI(
           content: [
             'You parse parent voice commands into allowance ledger entries.',
             'Positive amountDelta means the child earned money; negative means a deduction.',
+            'Treat phrases like "-1 dollar" or "-$5" as negative amountDelta.',
             `Known children: ${knownChildNames.length > 0 ? knownChildNames.join(', ') : 'none provided'}.`,
             'Set needsConfirmation true when amount, direction, or child is ambiguous.',
             'Use confidence between 0 and 1.',

@@ -30,11 +30,15 @@ function MainAppNavigator({
   return (
     <SiriSetupProvider>
       <RootStack.Navigator>
-        <RootStack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
+        <RootStack.Screen
+          name="MainTabs"
+          component={MainTabs}
+          options={{ headerShown: false, title: 'Patch Fund', headerBackTitle: 'Back' }}
+        />
         <RootStack.Screen
           name="SiriConfirm"
           component={SiriConfirmScreen}
-          options={{ title: 'From Siri' }}
+          options={{ title: 'From Siri', headerBackTitle: 'Back' }}
         />
       </RootStack.Navigator>
     </SiriSetupProvider>

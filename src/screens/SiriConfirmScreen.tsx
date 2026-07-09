@@ -1,123 +1,225 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { FormField, formStyles } from '../components/FormField';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { commitSiriEntry } from '../services/siriEntryService';
-import { formatMoney } from '../utils/formatMoney';
+import { LogDirection } from '../services/storageService';
 import { RootStackParamList } from '../navigation/types';
 import { colors, radii, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SiriConfirm'>;
+type Direction = LogDirection;
 
 export function SiriConfirmScreen({ route, navigation }: Props) {
   const pending = route.params.pending;
+  const [direction, setDirection] = useState<Direction>(
+    pending.parsed.amountDelta >= 0 ? 'add' : 'take',
+  );
+  const [amountText, setAmountText] = useState(String(Math.abs(pending.parsed.amountDelta) || ''));
+  const [reason, setReason] = useState(pending.parsed.reason);
   const [saving, setSaving] = useState(false);
 
-  const handleConfirm = useCallback(async () => {
-    setSaving(true);
-    try {
-      await commitSiriEntry(pending);
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs', params: { screen: 'HomeTab', params: { screen: 'Home' } } }],
-      });
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Could not save entry.');
-    } finally {
-      setSaving(false);
-    }
-  }, [pending, navigation]);
-
-  const handleCancel = useCallback(() => {
+  const goHome = useCallback(() => {
     navigation.reset({
       index: 0,
       routes: [{ name: 'MainTabs', params: { screen: 'HomeTab', params: { screen: 'Home' } } }],
     });
   }, [navigation]);
 
-  const amount =
-    pending.parsed.amountDelta > 0
-      ? `+${formatMoney(pending.parsed.amountDelta)}`
-      : formatMoney(pending.parsed.amountDelta);
+  const handleConfirm = useCallback(async () => {
+    const amount = Number(amountText);
+    if (!amountText.trim() || Number.isNaN(amount) || amount <= 0) {
+      Alert.alert('Enter an amount', 'Use a number greater than zero.');
+      return;
+    }
+    if (!reason.trim()) {
+      Alert.alert('Add a note', 'What was this for?');
+      return;
+    }
+
+    const amountDelta = direction === 'add' ? amount : -amount;
+
+    setSaving(true);
+    try {
+      await commitSiriEntry(pending, {
+        amountDelta,
+        reason: reason.trim(),
+      });
+      goHome();
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Could not save entry.');
+    } finally {
+      setSaving(false);
+    }
+  }, [amountText, reason, direction, pending, goHome]);
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
-      <Text style={styles.title}>From Siri</Text>
-      <Text style={styles.subtitle}>Does this look right?</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.subtitle}>Does this look right?</Text>
+        <Text style={styles.heard}>"{pending.spokenText}"</Text>
 
-      <View style={styles.card}>
-        <Text style={styles.amount}>{amount}</Text>
-        <Text style={styles.reason}>{pending.parsed.reason}</Text>
-        <Text style={styles.child}>for {pending.childName}</Text>
-      </View>
+        {pending.parsed.needsConfirmation ? (
+          <Text style={styles.warning}>
+            We're not totally sure about this one — tweak anything before saving.
+          </Text>
+        ) : null}
 
-      <Text style={styles.heard}>"{pending.spokenText}"</Text>
+        <Text style={styles.childLabel}>for {pending.childName}</Text>
 
-      {pending.parsed.needsConfirmation ? (
-        <Text style={styles.warning}>
-          We're not totally sure about this one — double-check before saving.
-        </Text>
-      ) : null}
+        <View style={styles.directionRow}>
+          <DirectionButton
+            label="Add"
+            selected={direction === 'add'}
+            onPress={() => setDirection('add')}
+            tone="positive"
+          />
+          <DirectionButton
+            label="Take"
+            selected={direction === 'take'}
+            onPress={() => setDirection('take')}
+            tone="negative"
+          />
+        </View>
 
-      <PrimaryButton label={saving ? 'Saving…' : 'Save'} onPress={handleConfirm} />
-      <PrimaryButton label="Discard" variant="secondary" onPress={handleCancel} />
-    </ScrollView>
+        <FormField label="Amount">
+          <View style={styles.amountWrap}>
+            <Text style={styles.currency}>$</Text>
+            <TextInput
+              style={[formStyles.input, formStyles.inputLarge, styles.amountInput]}
+              value={amountText}
+              onChangeText={setAmountText}
+              placeholder="0"
+              placeholderTextColor={colors.border}
+              keyboardType="decimal-pad"
+              inputMode="decimal"
+              returnKeyType="done"
+            />
+          </View>
+        </FormField>
+
+        <FormField label="What for?">
+          <TextInput
+            style={formStyles.input}
+            value={reason}
+            onChangeText={setReason}
+            placeholder="What was this for?"
+            returnKeyType="done"
+          />
+        </FormField>
+
+        <PrimaryButton label={saving ? 'Saving…' : 'Save'} onPress={handleConfirm} />
+        <PrimaryButton label="Discard" variant="secondary" onPress={goHome} />
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+function DirectionButton({
+  label,
+  selected,
+  onPress,
+  tone,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  tone: 'positive' | 'negative';
+}) {
+  const selectedStyle =
+    tone === 'positive'
+      ? { backgroundColor: colors.positiveLight, borderColor: colors.positive }
+      : { backgroundColor: colors.dangerLight, borderColor: colors.danger };
+  const selectedTextStyle =
+    tone === 'positive' ? { color: colors.positive } : { color: colors.danger };
+
+  return (
+    <Pressable
+      style={[styles.directionButton, selected && selectedStyle]}
+      onPress={onPress}
+    >
+      <Text style={[styles.directionLabel, selected && selectedTextStyle]}>{label}</Text>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   content: {
     padding: spacing.lg,
     paddingBottom: spacing.xl,
-    backgroundColor: colors.background,
-    flexGrow: 1,
-  },
-  title: {
-    ...typography.title,
-    fontSize: 28,
-    marginBottom: spacing.xs,
   },
   subtitle: {
     ...typography.caption,
     fontSize: 16,
-    marginBottom: spacing.lg,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  amount: {
-    fontSize: 40,
-    fontWeight: '700',
-    color: colors.text,
     marginBottom: spacing.sm,
-  },
-  reason: {
-    fontSize: 20,
-    color: colors.text,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-  },
-  child: {
-    ...typography.caption,
-    fontSize: 16,
   },
   heard: {
     ...typography.caption,
     fontSize: 15,
     fontStyle: 'italic',
-    textAlign: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   warning: {
     color: '#b45309',
     fontSize: 15,
-    textAlign: 'center',
     marginBottom: spacing.md,
+  },
+  childLabel: {
+    ...typography.label,
+    fontSize: 15,
+    marginBottom: spacing.md,
+  },
+  directionRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  directionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.border,
+  },
+  directionLabel: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+  amountWrap: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  currency: {
+    position: 'absolute',
+    left: spacing.md,
+    fontSize: 32,
+    fontWeight: '600',
+    color: colors.textMuted,
+    zIndex: 1,
+  },
+  amountInput: {
+    paddingLeft: 44,
   },
 });
