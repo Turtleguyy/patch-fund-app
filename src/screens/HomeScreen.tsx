@@ -17,6 +17,7 @@ import { ChildSelector } from '../components/ChildSelector';
 import { LedgerEntryList } from '../components/LedgerEntryList';
 import { EntrySuggestionRow } from '../components/EntrySuggestionRow';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { SectionCard, SettingsRow } from '../components/SettingsRow';
 import { Child } from '../models/Child';
 import { LedgerEntry } from '../models/LedgerEntry';
 import { allowanceService } from '../services/allowanceService';
@@ -206,6 +207,7 @@ export function HomeScreen({ navigation }: Props) {
             childName={selectedChild.name}
             balance={balance}
             weeklyStartingAmount={selectedChild.weeklyStartingAmount}
+            weekStartedAt={selectedChild.weekStartedAt}
             compact={isLandscape}
           />
 
@@ -233,23 +235,40 @@ export function HomeScreen({ navigation }: Props) {
             </>
           ) : null}
 
-          <PrimaryButton label="Start new week" variant="secondary" onPress={handleCloseWeek} />
-
           {!isLandscape ? (
             <>
-              <Text style={styles.sectionTitle}>Entries</Text>
+              <Text style={styles.sectionTitle}>This week</Text>
               <LedgerEntryList
                 entries={currentWeekEntries}
                 onPress={handleEditEntry}
                 onDelete={handleDeleteEntry}
               />
+              <SectionCard>
+                <SettingsRow
+                  icon="calendar-outline"
+                  title="Start new week"
+                  subtitle={`Give ${selectedChild.name} a fresh allowance. Past entries stay in History.`}
+                  onPress={handleCloseWeek}
+                  isLast
+                />
+              </SectionCard>
             </>
-          ) : null}
+          ) : (
+            <SectionCard>
+              <SettingsRow
+                icon="calendar-outline"
+                title="Start new week"
+                subtitle={`Fresh allowance for ${selectedChild.name}`}
+                onPress={handleCloseWeek}
+                isLast
+              />
+            </SectionCard>
+          )}
         </ScrollView>
 
         {isLandscape ? (
           <View style={styles.landscapeEntriesPane}>
-            <Text style={[styles.sectionTitle, styles.landscapeSectionTitle]}>Entries</Text>
+            <Text style={[styles.sectionTitle, styles.landscapeSectionTitle]}>This week</Text>
             <LedgerEntryList
               entries={currentWeekEntries}
               onPress={handleEditEntry}

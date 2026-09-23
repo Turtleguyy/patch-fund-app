@@ -6,13 +6,23 @@ interface BalanceCardProps {
   childName: string;
   balance: number;
   weeklyStartingAmount: number;
+  weekStartedAt: string;
   compact?: boolean;
+}
+
+function formatWeekStarted(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export function BalanceCard({
   childName,
   balance,
   weeklyStartingAmount,
+  weekStartedAt,
   compact = false,
 }: BalanceCardProps) {
   const tone = balanceColors(balance);
@@ -31,7 +41,7 @@ export function BalanceCard({
         {formatMoney(balance)}
       </Text>
       <Text style={[styles.subtitle, compact && styles.subtitleCompact]}>
-        Started at {formatMoney(weeklyStartingAmount)}
+        Started at {formatMoney(weeklyStartingAmount)} · {formatWeekStarted(weekStartedAt)}
       </Text>
     </View>
   );

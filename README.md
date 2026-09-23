@@ -8,13 +8,13 @@ Built with **Expo SDK 56** and **React Native**.
 
 ### Home
 
-- Shows the **current week's allowance** as the hero element (large balance, green when positive / red when negative).
+- Shows the **current week's allowance** as the hero element (large balance, green when positive / red when negative), including the week start date.
 - **Log an entry** — add or take money with an amount and a short note ("What for?").
 - **Quick log** — after you've logged a few times, the three most common amount + note combos for the selected child appear as one-tap buttons below **Log an entry** (saves immediately).
-- **Start new week** — closes the current week (saves a summary to history) and resets the child to their weekly starting allowance. Past entries are kept.
 - Lists **this week's entries** (reason, date, amount, and who logged it when using household sync).
 - **Tap an entry** to edit the amount or note.
 - **Swipe left** on an entry to delete it (with confirmation).
+- **Start new week** — below the entry list, with a short explanation; closes the week (saves a summary to History) and resets the child's allowance.
 - In **landscape**, balance and actions stay on the left; entries scroll on the right.
 
 Child switching appears on Home only when you have more than one kid.
@@ -223,7 +223,7 @@ Auth flow (when Supabase is configured): Sign in (Apple, Google, or Facebook) �
 
 - **Accent**: hot pink (`#DB2777`) for primary actions and selected child chips.
 - **Balance hero**: green/red tint based on positive/negative balance (not the accent color).
-- **Start new week**: neutral secondary button (not destructive red).
+- **Start new week**: calendar action under this week's entries (not a muted button next to Log).
 - **App icon**: pink patch with stitched border and dollar coin.
 
 ## Known limitations
