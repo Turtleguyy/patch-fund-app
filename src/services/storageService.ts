@@ -8,8 +8,6 @@ const KEYS = {
   entries: '@allowance/entries',
   selectedChildId: '@allowance/selectedChildId',
   lastLogDirection: '@allowance/lastLogDirection',
-  siriSetupPromptDismissed: '@allowance/siriSetupPromptDismissed',
-  hasLoggedViaSiri: '@allowance/hasLoggedViaSiri',
   weekSummaries: '@allowance/weekSummaries',
 } as const;
 
@@ -61,22 +59,6 @@ export const storageService = {
 
   async setLastLogDirection(direction: LogDirection): Promise<void> {
     await AsyncStorage.setItem(KEYS.lastLogDirection, direction);
-  },
-
-  async getSiriSetupPromptDismissed(): Promise<boolean> {
-    return (await AsyncStorage.getItem(KEYS.siriSetupPromptDismissed)) === 'true';
-  },
-
-  async setSiriSetupPromptDismissed(dismissed: boolean): Promise<void> {
-    await AsyncStorage.setItem(KEYS.siriSetupPromptDismissed, dismissed ? 'true' : 'false');
-  },
-
-  async getHasLoggedViaSiri(): Promise<boolean> {
-    return (await AsyncStorage.getItem(KEYS.hasLoggedViaSiri)) === 'true';
-  },
-
-  async setHasLoggedViaSiri(logged: boolean): Promise<void> {
-    await AsyncStorage.setItem(KEYS.hasLoggedViaSiri, logged ? 'true' : 'false');
   },
 
   async getWeekSummaries(): Promise<WeekSummary[]> {

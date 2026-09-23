@@ -1,8 +1,8 @@
 # Patch Fund
 
-A parent-facing allowance tracker for iOS. Log weekly allowance for each child, see the current balance at a glance, review past weeks, and log entries manually or via Siri. Sync a household between parents with Supabase.
+A parent-facing allowance tracker for iOS. Log weekly allowance for each child, see the current balance at a glance, review past weeks, and share a household between parents with Supabase.
 
-Built with **Expo SDK 56**, **React Native**, and a custom native module for Siri App Intents and App Group storage.
+Built with **Expo SDK 56** and **React Native**.
 
 ## What it does
 
@@ -28,11 +28,10 @@ Used when you tap **Log an entry** on Home or when you **tap an existing entry**
 
 ### Household (tab)
 
-Organized in sections: **You**, **Sharing** (when signed in), **Voice**, and **Kids**.
+Organized in sections: **You**, **Sharing** (when signed in), and **Kids**.
 
 - Set or edit **your name** — shown on entries you log so the other parent knows who added them.
 - **Invite code** and **Share invite code** when signed in (for the other parent to join).
-- **Log with Siri** — reopen the full Siri setup guide anytime (first launch shows a shorter version).
 - List all children with weekly allowance; tap to edit, trash icon to remove.
 - **Add a child** opens a blank form.
 - **Sign out** when using household sync.
@@ -46,46 +45,6 @@ Organized in sections: **You**, **Sharing** (when signed in), **Voice**, and **K
 - **Swipe left** to delete entries from that week.
 - Weeks are recorded when you tap **Start new week** on Home.
 - Older entries from before week summaries existed are grouped by calendar week as a best-effort fallback.
-
-### Siri shortcuts
-
-Requires a **development or release build** (not Expo Go).
-
-**How to use**
-
-1. Say **"Patch Fund"** (or **"Update Patch Fund"**) to Siri.
-2. Siri asks **what to log** — say a full natural-language entry, for example:
-   - "add five dollars for mowing the lawn"
-   - "take two dollars from Harper for talking back"
-3. The app opens, parses your phrase, and saves or shows a **From Siri** confirmation screen where you can adjust add/take, amount, and note before saving.
-
-**Parsing**
-
-The full spoken phrase is sent to the parser (OpenAI when `EXPO_PUBLIC_OPENAI_API_KEY` is set, otherwise local rules). It extracts:
-
-- **Amount** — signed (`+` earned, `-` deducted)
-- **Child** — if you named one
-- **Reason** — e.g. chore or behavior note
-- **Confidence** — whether to ask before saving
-
-**Child resolution** (when you don't name a kid in the phrase):
-
-1. Child named in the phrase (matched against your household)
-2. Child currently selected on Home
-3. Only child in the household
-4. Otherwise → **From Siri** confirmation screen to review before saving
-
-The app also syncs children and the selected child to the App Group so Siri and the parser know who is in the household.
-
-**First-time setup on device**
-
-After installing, open Patch Fund at least once so iOS can register shortcuts. The app shows a short **Log with Siri** guide on first launch (enable Siri, then try the phrase). Reopen the full troubleshooting guide from **Household → Log with Siri**.
-
-In iOS Settings, go to **Apple Intelligence & Siri → Apps → Patch Fund** and turn on **Learn from this App** and the **Suggestions** toggles.
-
-Try **"Hey Siri, Patch Fund"** or search **"Log Entry"** in the Shortcuts app. Apple does not expose whether per-app shortcuts are enabled, so the in-app guide focuses on Siri permission and these settings.
-
-Shortcut phrases and the Siri prompt text live in `modules/allowance-intents/plugin/swift/` (`AllowanceShortcuts.swift`, `LogAllowanceIntent.swift`). Run `npm run prebuild` after editing them.
 
 ### Household sync (Supabase)
 
@@ -106,9 +65,8 @@ See **[supabase/SETUP.md](supabase/SETUP.md)** for dashboard configuration (incl
 
 | Requirement | Notes |
 |-------------|--------|
-| **Dev or release build** | Uses `expo-dev-client`, native Siri module, Sign in with Apple, native Google Sign-In — **Expo Go will not work**. |
-| **Physical iPhone** | Siri App Intents and App Groups need a real device (simulator has limitations). |
-| **Apple Developer account** | App Groups, Siri, device installs, and TestFlight. |
+| **Dev or release build** | Uses `expo-dev-client`, Sign in with Apple, native Google Sign-In — **Expo Go will not work**. |
+| **Apple Developer account** | Device installs and TestFlight. |
 | **Node.js** | LTS recommended. |
 
 ## Getting started
@@ -126,7 +84,6 @@ Copy `.env.example` to `.env` and fill in:
 | Variable | Required | Purpose |
 |----------|----------|---------|
 | `APPLE_TEAM_ID` | iOS builds | 10-character Team ID from Apple Developer → Membership. |
-| `EXPO_PUBLIC_OPENAI_API_KEY` | Optional | Improves Siri phrase parsing. Without it, a local rules-based parser is used. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Household sync | Supabase project URL (Project Settings → API). |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Household sync | Supabase anon/public key. |
 | `EXPO_PUBLIC_GOOGLE_AUTH_WEB_CLIENT_ID` | Google sign-in | Web OAuth client ID (also goes in Supabase Google provider). |
@@ -167,8 +124,6 @@ npm run ios -- --device
 ```
 
 On first launch you'll see the **Expo Dev Client** launcher. Tap **Patch Fund** to load JS from Metro. Grant **Local Network** if the dev server doesn't appear.
-
-After changing Swift files under `modules/allowance-intents/plugin/swift/`, rebuild the native app. Keep `ios/PatchFund/AppIntents/` in sync if you edit shortcuts there directly. The config plugin prunes removed Swift files from the Xcode project on prebuild.
 
 Google Sign-In requires the Google client IDs in `.env` **before** `prebuild` (adds the iOS URL scheme and CocoaPods config). If `pod install` fails on Google pods, the `withGoogleSignInPods` plugin adds the required modular headers.
 
@@ -211,8 +166,6 @@ Defined in `src/config/appIdentity.js`:
 | App name | Patch Fund |
 | URL scheme | `patchfund://` |
 | Bundle ID | `com.zach.patchfund` |
-| App Group | `group.com.zach.patchfund` |
-| Siri deep link | `patchfund://siri/log` |
 
 ## Data model
 
@@ -221,7 +174,7 @@ Defined in `src/config/appIdentity.js`:
 **Household sync** stores data in Supabase (children, entries, week summaries, profiles, households). The app caches the selected child id locally; cloud data is the source of truth when signed in.
 
 - **Children** — id, name, `weeklyStartingAmount`, `weekStartedAt` (start of current week).
-- **Ledger entries** — id, childId, `amountDelta`, reason, source (`manual` \| `siri` \| `ai`), `createdAt`, `createdBy` (cloud only).
+- **Ledger entries** — id, childId, `amountDelta`, reason, source (`manual`, or legacy `siri` / `ai`), `createdAt`, `createdBy` (cloud only).
 - **Profiles** — display name per parent (cloud only).
 - **Week summaries** — created when a week is closed; stores date range, starting allowance, and ending balance.
 
@@ -237,16 +190,14 @@ Removing a child deletes their entries and week summaries.
 
 ```
 src/
-  screens/          # Home, Adjustment, History, Household, auth, Siri confirm, etc.
+  screens/          # Home, Adjustment, History, Household, auth, etc.
   components/       # BalanceCard, ChildSelector, EntryFormFields, EntrySuggestionRow, LedgerEntryList, …
-  services/         # allowance, storage, household, auth, googleSignIn, Siri, AI parser
+  services/         # allowance, storage, household, auth, googleSignIn
   utils/            # entryForm, entrySuggestions, weekUtils, formatMoney
   context/          # AuthProvider (session, household, profile)
   navigation/       # Tab + stack navigators, deep linking
   models/           # Child, LedgerEntry, WeekSummary, Profile
   theme.ts          # Colors, spacing, typography
-modules/
-  allowance-intents/  # Expo native module + config plugin (Siri, App Group)
 plugins/
   withGoogleSignInPods.js  # CocoaPods fix for Google Sign-In
 supabase/
@@ -268,8 +219,6 @@ Bottom tabs:
 
 Auth flow (when Supabase is configured): Sign in (Apple, Google, or Facebook) → Your name → Create/join household → main app.
 
-Modal stack above tabs: **From Siri** confirmation when needed.
-
 ## Design notes
 
 - **Accent**: hot pink (`#DB2777`) for primary actions and selected child chips.
@@ -279,7 +228,7 @@ Modal stack above tabs: **From Siri** confirmation when needed.
 
 ## Known limitations
 
-- **iOS-first** — Siri and App Groups are iOS-only; Android package exists but is not the focus.
+- **iOS-first** — Android package exists but is not the focus.
 - **Editing or deleting entries from a closed week** updates the entry list but not the saved week summary ending balance (that was snapshotted at close).
 - **Week history before summaries** — inferred by calendar week; less precise than weeks closed via **Start new week**.
 - **Apple name on sign-in** — Apple only sends your full name on the very first authorization; the app prompts you to confirm or enter your name.

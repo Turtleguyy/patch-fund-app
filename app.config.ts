@@ -27,13 +27,6 @@ const plugins: ExpoConfig['plugins'] = [
   ],
   'expo-apple-authentication',
   'expo-web-browser',
-  [
-    './modules/allowance-intents/plugin/withAllowanceIntents.js',
-    {
-      appGroup: APP_IDENTITY.appGroup,
-      siriDeepLink: `${APP_IDENTITY.scheme}://${APP_IDENTITY.siriDeepLinkPath}`,
-    },
-  ],
 ];
 
 if (googleIosUrlScheme) {
@@ -56,13 +49,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     usesAppleSignIn: true,
     appleTeamId: process.env.APPLE_TEAM_ID,
-    entitlements: {
-      'com.apple.security.application-groups': [APP_IDENTITY.appGroup],
-    },
-    infoPlist: {
-      NSSiriUsageDescription:
-        'Patch Fund uses Siri so you can log allowance entries by voice.',
-    },
   },
   android: {
     ...config.android,
@@ -73,12 +59,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
   },
   extra: {
-    openAiApiKey: process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '',
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
     googleAuthWebClientId,
     googleAuthIosClientId,
-    appGroup: APP_IDENTITY.appGroup,
     scheme: APP_IDENTITY.scheme,
   },
   plugins,

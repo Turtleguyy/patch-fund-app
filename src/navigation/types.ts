@@ -1,4 +1,3 @@
-import { PendingSiriEntry } from '../services/siriEntryService';
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type AuthStackParamList = {
@@ -31,5 +30,4 @@ export type MainTabParamList = {
 
 export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
-  SiriConfirm: { pending: PendingSiriEntry };
 };

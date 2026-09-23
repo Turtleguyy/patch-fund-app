@@ -13,7 +13,6 @@ import {
   cloudAllowanceRepository,
   getActiveHouseholdId,
 } from './householdService';
-import { syncChildrenToAppGroup } from './siriEntryService';
 import { storageService } from './storageService';
 
 function isCloudMode(): boolean {
@@ -32,8 +31,6 @@ async function ensureLocalSeedData(): Promise<{ children: Child[]; selectedChild
       await storageService.clearSelectedChildId();
     }
   }
-
-  syncChildrenToAppGroup(children);
   return { children, selectedChildId };
 }
 
@@ -60,8 +57,6 @@ async function loadCloudState(): Promise<{
       await storageService.clearSelectedChildId();
     }
   }
-
-  syncChildrenToAppGroup(children);
   return { children, entries, selectedChildId, summaries };
 }
 
@@ -90,12 +85,10 @@ export const allowanceService = {
     if (isCloudMode()) {
       const householdId = getActiveHouseholdId()!;
       const { children } = await cloudAllowanceRepository.fetchHouseholdState(householdId);
-      syncChildrenToAppGroup(children, childId);
       return;
     }
 
     const children = await storageService.getChildren();
-    syncChildrenToAppGroup(children, childId);
   },
 
   async addChild(name: string, weeklyStartingAmount = DEFAULT_WEEKLY_STARTING_AMOUNT): Promise<Child> {
@@ -108,7 +101,6 @@ export const allowanceService = {
       );
       await storageService.setSelectedChildId(child.id);
       const { children } = await cloudAllowanceRepository.fetchHouseholdState(householdId);
-      syncChildrenToAppGroup(children);
       return child;
     }
 
@@ -117,7 +109,6 @@ export const allowanceService = {
     const updated = [...children, child];
     await storageService.saveChildren(updated);
     await storageService.setSelectedChildId(child.id);
-    syncChildrenToAppGroup(updated);
     return child;
   },
 
@@ -134,7 +125,6 @@ export const allowanceService = {
       );
       const householdId = getActiveHouseholdId()!;
       const { children } = await cloudAllowanceRepository.fetchHouseholdState(householdId);
-      syncChildrenToAppGroup(children);
       return child;
     }
 
@@ -145,7 +135,6 @@ export const allowanceService = {
     await storageService.saveChildren(updated);
     const child = updated.find((item) => item.id === childId);
     if (!child) throw new Error('Child not found');
-    syncChildrenToAppGroup(updated);
     return child;
   },
 
@@ -376,8 +365,6 @@ export const allowanceService = {
           await storageService.clearSelectedChildId();
         }
       }
-
-      syncChildrenToAppGroup(children);
       return { children, entries, selectedChildId };
     }
 
@@ -408,8 +395,6 @@ export const allowanceService = {
         await storageService.clearSelectedChildId();
       }
     }
-
-    syncChildrenToAppGroup(updatedChildren);
     return { children: updatedChildren, entries: updatedEntries, selectedChildId };
   },
 };

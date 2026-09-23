@@ -14,7 +14,6 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { useSiriSetup } from '../context/SiriSetupContext';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { SectionCard, SettingsRow } from '../components/SettingsRow';
 import { Child } from '../models/Child';
@@ -33,7 +32,6 @@ function childInitial(name: string): string {
 
 export function ManageChildrenScreen({ navigation }: Props) {
   const { household, isCloudEnabled, profile, refreshProfile, signOut } = useAuth();
-  const { isAvailable: siriAvailable, show: showSiriSetup } = useSiriSetup();
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState<Child[]>([]);
   const [displayName, setDisplayName] = useState(profile?.displayName ?? '');
@@ -168,18 +166,6 @@ export function ManageChildrenScreen({ navigation }: Props) {
             <Text style={styles.inviteHint}>Share this with the other parent to join your household.</Text>
             <PrimaryButton label="Share invite code" variant="secondary" onPress={handleShareInvite} />
           </View>
-        </SectionCard>
-      ) : null}
-
-      {siriAvailable ? (
-        <SectionCard title="Voice">
-          <SettingsRow
-            icon="mic-outline"
-            title="Log with Siri"
-            subtitle={'Say "Hey Siri, Patch Fund" to log by voice'}
-            onPress={() => void showSiriSetup()}
-            isLast
-          />
         </SectionCard>
       ) : null}
 

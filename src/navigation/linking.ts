@@ -10,10 +10,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
         screens: {
           HomeTab: {
             screens: {
-              Home: {
-                path: 'home',
-                alias: [APP_IDENTITY.siriDeepLinkPath],
-              },
+              Home: 'home',
               Adjustment: 'adjustment/:childId',
             },
           },
@@ -24,7 +21,6 @@ export const linking: LinkingOptions<RootStackParamList> = {
           },
         },
       },
-      SiriConfirm: 'siri-confirm',
     },
   },
 };

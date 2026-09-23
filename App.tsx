@@ -1,52 +1,34 @@
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import { useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
-import { useSiriEntryBootstrap } from './src/hooks/useSiriEntryBootstrap';
-import { SiriSetupProvider } from './src/context/SiriSetupContext';
 import { MainTabs } from './src/navigation/MainTabs';
 import { linking } from './src/navigation/linking';
 import { AuthStackParamList, RootStackParamList } from './src/navigation/types';
 import { HouseholdOnboardingScreen } from './src/screens/HouseholdOnboardingScreen';
 import { SetDisplayNameScreen } from './src/screens/SetDisplayNameScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
-import { SiriConfirmScreen } from './src/screens/SiriConfirmScreen';
 import { colors } from './src/theme';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 
-function MainAppNavigator({
-  navigationRef,
-}: {
-  navigationRef: React.RefObject<NavigationContainerRef<RootStackParamList> | null>;
-}) {
-  useSiriEntryBootstrap(navigationRef);
-
+function MainAppNavigator() {
   return (
-    <SiriSetupProvider>
-      <RootStack.Navigator>
-        <RootStack.Screen
-          name="MainTabs"
-          component={MainTabs}
-          options={{ headerShown: false, title: 'Patch Fund', headerBackTitle: 'Back' }}
-        />
-        <RootStack.Screen
-          name="SiriConfirm"
-          component={SiriConfirmScreen}
-          options={{ title: 'From Siri', headerBackTitle: 'Back' }}
-        />
-      </RootStack.Navigator>
-    </SiriSetupProvider>
+    <RootStack.Navigator>
+      <RootStack.Screen
+        name="MainTabs"
+        component={MainTabs}
+        options={{ headerShown: false, title: 'Patch Fund', headerBackTitle: 'Back' }}
+      />
+    </RootStack.Navigator>
   );
 }
 
 function AppShell() {
-  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const { loading, isCloudEnabled, isSignedIn, profile, needsProfileSetup, household } = useAuth();
   const mainAppReady =
     !loading &&
@@ -93,11 +75,11 @@ function AppShell() {
       </AuthStack.Navigator>
     );
   } else {
-    content = <MainAppNavigator navigationRef={navigationRef} />;
+    content = <MainAppNavigator />;
   }
 
   return (
-    <NavigationContainer ref={navigationRef} linking={mainAppReady ? linking : undefined}>
+    <NavigationContainer linking={mainAppReady ? linking : undefined}>
       <StatusBar style="auto" />
       {content}
     </NavigationContainer>
