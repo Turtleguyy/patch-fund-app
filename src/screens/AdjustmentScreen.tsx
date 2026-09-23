@@ -2,8 +2,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -141,39 +139,39 @@ export function AdjustmentScreen({ route, navigation }: Props) {
   }
 
   return (
-    <KeyboardAvoidingView
+    <ScrollView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{isEditing ? 'Edit entry' : 'Log an entry'}</Text>
-        <Text style={styles.subtitle}>
-          {isEditing ? 'Update the amount or note.' : 'Add money earned or take some away.'}
-        </Text>
+      <Text style={styles.title}>{isEditing ? 'Edit entry' : 'Log an entry'}</Text>
+      <Text style={styles.subtitle}>
+        {isEditing ? 'Update the amount or note.' : 'Add money earned or take some away.'}
+      </Text>
 
-        {suggestions.length > 0 ? (
-          <>
-            <Text style={styles.suggestionsLabel}>Suggestions</Text>
-            <EntrySuggestionRow suggestions={suggestions} onSelect={applySuggestion} />
-          </>
-        ) : null}
+      {suggestions.length > 0 ? (
+        <>
+          <Text style={styles.suggestionsLabel}>Suggestions</Text>
+          <EntrySuggestionRow suggestions={suggestions} onSelect={applySuggestion} />
+        </>
+      ) : null}
 
-        <EntryFormFields
-          direction={direction}
-          onDirectionChange={handleDirectionChange}
-          amountText={amountText}
-          onAmountTextChange={setAmountText}
-          reason={reason}
-          onReasonChange={setReason}
-          reasonHint={isEditing ? undefined : "A quick note you'll recognize later."}
-        />
+      <EntryFormFields
+        direction={direction}
+        onDirectionChange={handleDirectionChange}
+        amountText={amountText}
+        onAmountTextChange={setAmountText}
+        reason={reason}
+        onReasonChange={setReason}
+        reasonHint={isEditing ? undefined : "A quick note you'll recognize later."}
+      />
 
-        <View style={styles.actions}>
-          <PrimaryButton label={saving ? 'Saving…' : 'Save'} onPress={handleSave} />
-          <PrimaryButton label="Cancel" variant="secondary" onPress={() => navigation.goBack()} />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      <View style={styles.actions}>
+        <PrimaryButton label={saving ? 'Saving…' : 'Save'} onPress={handleSave} />
+        <PrimaryButton label="Cancel" variant="secondary" onPress={() => navigation.goBack()} />
+      </View>
+    </ScrollView>
   );
 }
 
