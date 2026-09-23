@@ -91,7 +91,7 @@ Shortcut phrases and the Siri prompt text live in `modules/allowance-intents/plu
 
 When `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set:
 
-- **Sign in** with Apple (iOS) or Google (native account picker) — each provider is a separate account (no linking).
+- **Sign in** with Apple (iOS), Google (native account picker), or Facebook (browser OAuth) — each provider is a separate account (no linking).
 - **Set your name** (from the provider when available, or enter it manually).
 - **Create a household** or **join** with a 6-character invite code from another parent.
 - Children, entries, and week history sync through Supabase with **real-time updates** between devices.
@@ -144,7 +144,8 @@ Follow **[supabase/SETUP.md](supabase/SETUP.md)**:
 4. Enable Realtime on `children`, `ledger_entries`, `week_summaries`.
 5. Enable the Apple auth provider (add bundle ID `com.zach.patchfund`).
 6. Enable Google (Web + iOS OAuth clients, **Skip nonce check**) — see [supabase/SETUP.md](supabase/SETUP.md) §3b.
-7. Add Supabase and Google client IDs to `.env` (see step 2 above).
+7. Enable Facebook (App ID + Secret, redirect `patchfund://auth/callback`) — see [supabase/SETUP.md](supabase/SETUP.md) §3c.
+8. Add Supabase and Google client IDs to `.env` (see step 2 above).
 
 ### 4. Generate native projects
 
@@ -265,7 +266,7 @@ Bottom tabs:
 | **History** | calendar | Past weeks, week detail |
 | **Household** | people | Your name, invite code, manage children |
 
-Auth flow (when Supabase is configured): Sign in (Apple or Google) → Your name → Create/join household → main app.
+Auth flow (when Supabase is configured): Sign in (Apple, Google, or Facebook) → Your name → Create/join household → main app.
 
 Modal stack above tabs: **From Siri** confirmation when needed.
 
@@ -282,7 +283,7 @@ Modal stack above tabs: **From Siri** confirmation when needed.
 - **Editing or deleting entries from a closed week** updates the entry list but not the saved week summary ending balance (that was snapshotted at close).
 - **Week history before summaries** — inferred by calendar week; less precise than weeks closed via **Start new week**.
 - **Apple name on sign-in** — Apple only sends your full name on the very first authorization; the app prompts you to confirm or enter your name.
-- **Facebook sign-in** — not enabled yet (pending Meta app verification).
+- **Facebook sign-in** — browser OAuth briefly routes through Supabase before returning to `patchfund://auth/callback`.
 
 ## License
 

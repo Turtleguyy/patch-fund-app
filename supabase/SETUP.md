@@ -91,9 +91,30 @@ Rebuild the native app after adding these (`npm run prebuild`).
 
 See [Supabase Login with Google](https://supabase.com/docs/guides/auth/social-login/auth-google).
 
-## 3c. Facebook (disabled for now)
+## 3c. Facebook
 
-Facebook sign-in is not enabled in the app until Meta business verification completes. The OAuth redirect URL `patchfund://auth/callback` can stay configured for when it is re-enabled.
+Facebook sign-in uses the browser OAuth flow (no Facebook SDK). Credentials live in Supabase and Meta — nothing Facebook-specific goes in `.env`.
+
+### Meta / Facebook Developer
+
+1. Open [Meta for Developers](https://developers.facebook.com/) → your app.
+2. Ensure the app is in **Live** mode (business verification complete).
+3. Add product **Facebook Login** if needed.
+4. **Facebook Login → Settings**:
+   - Under **Valid OAuth Redirect URIs**, add your Supabase callback:
+     `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+   - Save.
+5. **App settings → Basic**: copy **App ID** and **App Secret**.
+
+### Supabase
+
+1. **Authentication → URL Configuration**:
+   - Add redirect URL: `patchfund://auth/callback`
+2. **Authentication → Providers → Facebook** → enable.
+3. Paste Facebook **App ID** (Client ID) and **App Secret**.
+4. Save.
+
+See [Supabase Login with Facebook](https://supabase.com/docs/guides/auth/social-login/auth-facebook).
 
 ## 4. Add API keys to `.env`
 

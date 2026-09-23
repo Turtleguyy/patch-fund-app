@@ -3,10 +3,10 @@ import { Platform } from 'react-native';
 import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import { formatAppleFullName, profileService } from './profileService';
 import {
-  isGoogleSignInConfigured,
   signInWithGoogleNative,
   signOutGoogleNative,
 } from './googleSignIn';
+import { signInWithOAuthProvider } from './oauthSession';
 
 function isUserCancelError(error: unknown): boolean {
   return error instanceof Error && error.message.includes('ERR_REQUEST_CANCELED');
@@ -22,6 +22,10 @@ export const authService = {
   },
 
   isGoogleAvailable(): boolean {
+    return isSupabaseConfigured();
+  },
+
+  isFacebookAvailable(): boolean {
     return isSupabaseConfigured();
   },
 
@@ -58,6 +62,10 @@ export const authService = {
 
   async signInWithGoogle(): Promise<void> {
     await signInWithGoogleNative();
+  },
+
+  async signInWithFacebook(): Promise<void> {
+    await signInWithOAuthProvider('facebook');
   },
 
   isUserCancelError,

@@ -8,13 +8,14 @@ import { authService } from '../services/authService';
 import { colors, spacing, typography } from '../theme';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'SignIn'>;
-type SignInProvider = 'apple' | 'google';
+type SignInProvider = 'apple' | 'google' | 'facebook';
 
 export function SignInScreen(_props: Props) {
   const [loadingProvider, setLoadingProvider] = useState<SignInProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [appleAvailable, setAppleAvailable] = useState<boolean | null>(null);
   const googleAvailable = authService.isGoogleAvailable();
+  const facebookAvailable = authService.isFacebookAvailable();
 
   useEffect(() => {
     if (!authService.isAppleAvailable()) {
@@ -50,9 +51,13 @@ export function SignInScreen(_props: Props) {
     void runSignIn('google', () => authService.signInWithGoogle());
   }, [runSignIn]);
 
+  const handleFacebookSignIn = useCallback(() => {
+    void runSignIn('facebook', () => authService.signInWithFacebook());
+  }, [runSignIn]);
+
   const busy = loadingProvider !== null;
   const checkingApple = appleAvailable === null;
-  const hasSignInOption = appleAvailable || googleAvailable;
+  const hasSignInOption = appleAvailable || googleAvailable || facebookAvailable;
 
   return (
     <View style={styles.container}>
@@ -84,6 +89,16 @@ export function SignInScreen(_props: Props) {
               backgroundColor="#fff"
               textColor={colors.text}
               borderColor={colors.border}
+            />
+          ) : null}
+
+          {facebookAvailable ? (
+            <SocialSignInButton
+              label="Continue with Facebook"
+              onPress={handleFacebookSignIn}
+              loading={loadingProvider === 'facebook'}
+              disabled={busy}
+              backgroundColor="#1877F2"
             />
           ) : null}
         </View>
