@@ -37,6 +37,10 @@ if (googleIosUrlScheme) {
   plugins.push('./plugins/withGoogleSignInPods.js');
 }
 
+plugins.push('./plugins/withIosMinDeploymentTarget.js');
+plugins.push('./plugins/withIosSceneLifecycle.js');
+
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: APP_IDENTITY.name,
