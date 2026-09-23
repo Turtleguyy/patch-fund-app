@@ -29,7 +29,6 @@ export function WeekHistoryDetailScreen({ route, navigation }: Props) {
     useCallback(() => {
       let active = true;
       (async () => {
-        setLoading(true);
         await load();
         if (active) setLoading(false);
       })();

@@ -52,7 +52,6 @@ export function ManageChildrenScreen({ navigation }: Props) {
     useCallback(() => {
       let active = true;
       (async () => {
-        setLoading(true);
         await load();
         if (active) setLoading(false);
       })();

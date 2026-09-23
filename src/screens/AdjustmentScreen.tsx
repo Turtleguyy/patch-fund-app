@@ -1,12 +1,14 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
-  ScrollView,
+  Dimensions,
+  Keyboard,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 import { useFocusEffect } from '@react-navigation/native';
 import { EntryFormFields } from '../components/EntryFormFields';
 import { EntrySuggestionRow } from '../components/EntrySuggestionRow';
@@ -41,6 +43,67 @@ export function AdjustmentScreen({ route, navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isEditing);
   const [entries, setEntries] = useState<LedgerEntry[]>([]);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
+  const reasonContainerRef = useRef<View>(null);
+  const scrollOffsetRef = useRef(0);
+  const keyboardHeightRef = useRef(0);
+  const reasonFocusedRef = useRef(false);
+
+  const ensureReasonVisible = useCallback(() => {
+    const run = () => {
+      const kb = keyboardHeightRef.current;
+      if (kb <= 0 || !reasonFocusedRef.current) return;
+
+      reasonContainerRef.current?.measureInWindow((_x, y, _w, height) => {
+        const keyboardTop = Dimensions.get('window').height - kb;
+        const overflow = y + height + spacing.md - keyboardTop;
+        if (overflow <= 0) return;
+
+        scrollRef.current?.scrollTo({
+          y: Math.max(0, scrollOffsetRef.current + overflow),
+          animated: true,
+        });
+      });
+    };
+
+    // Wait a frame (and one short beat) so layout/keyboard frame can settle,
+    // especially when switching from the decimal pad to the text keyboard.
+    requestAnimationFrame(run);
+    setTimeout(run, 80);
+  }, []);
+
+  useEffect(() => {
+    const visibleKeyboardHeight = (event: { endCoordinates: { screenY: number; height: number } }) => {
+      const fromScreenY = Dimensions.get('window').height - event.endCoordinates.screenY;
+      // Prefer screenY so partially-offscreen frames (and home-indicator devices)
+      // report the height that actually covers the window.
+      return Math.max(0, fromScreenY > 0 ? fromScreenY : event.endCoordinates.height);
+    };
+
+    const updateHeight = (height: number) => {
+      keyboardHeightRef.current = height;
+      setKeyboardHeight(height);
+      if (height > 0 && reasonFocusedRef.current) {
+        ensureReasonVisible();
+      }
+    };
+
+    const show = Keyboard.addListener('keyboardWillShow', (event) => {
+      updateHeight(visibleKeyboardHeight(event));
+    });
+    const change = Keyboard.addListener('keyboardWillChangeFrame', (event) => {
+      updateHeight(visibleKeyboardHeight(event));
+    });
+    const hide = Keyboard.addListener('keyboardWillHide', () => {
+      updateHeight(0);
+    });
+    return () => {
+      show.remove();
+      change.remove();
+      hide.remove();
+    };
+  }, [ensureReasonVisible]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,10 +203,18 @@ export function AdjustmentScreen({ route, navigation }: Props) {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.container}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
+      contentContainerStyle={[
+        styles.content,
+        keyboardHeight > 0 ? { paddingBottom: keyboardHeight + spacing.lg } : null,
+      ]}
+      keyboardShouldPersistTaps="always"
+      keyboardDismissMode="none"
+      onScroll={(event) => {
+        scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+      }}
+      scrollEventThrottle={16}
     >
       <Text style={styles.title}>{isEditing ? 'Edit entry' : 'Log an entry'}</Text>
       <Text style={styles.subtitle}>
@@ -165,6 +236,15 @@ export function AdjustmentScreen({ route, navigation }: Props) {
         reason={reason}
         onReasonChange={setReason}
         reasonHint={isEditing ? undefined : "A quick note you'll recognize later."}
+        autoFocusAmount
+        reasonContainerRef={reasonContainerRef}
+        onReasonFocus={() => {
+          reasonFocusedRef.current = true;
+          ensureReasonVisible();
+        }}
+        onReasonBlur={() => {
+          reasonFocusedRef.current = false;
+        }}
       />
 
       <View style={styles.actions}>
