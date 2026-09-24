@@ -7,6 +7,7 @@ import {
   Alert,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   useWindowDimensions,
@@ -23,7 +24,7 @@ import { LedgerEntry } from '../models/LedgerEntry';
 import { allowanceService } from '../services/allowanceService';
 import { storageService } from '../services/storageService';
 import { EntrySuggestion, getTopEntrySuggestions } from '../utils/entrySuggestions';
-import { calculateWeeklyBalance } from '../utils/weekUtils';
+import { calculateWeeklyBalance, formatWeekCloseShareMessage } from '../utils/weekUtils';
 import { formatMoney } from '../utils/formatMoney';
 import { useCloudSync } from '../hooks/useCloudSync';
 import { HomeStackParamList, MainTabParamList } from '../navigation/types';
@@ -106,23 +107,58 @@ export function HomeScreen({ navigation }: Props) {
   const handleCloseWeek = useCallback(() => {
     if (!selectedChild) return;
 
+    const child = selectedChild;
+    const weekSnapshot = currentWeekEntries;
+    const endingBalance = balance;
+    const startedAt = child.weekStartedAt;
+
     Alert.alert(
       'Start a new week?',
-      `${selectedChild.name} will get a fresh allowance. Past entries stay in history.`,
+      `${child.name} will get a fresh allowance. Past entries stay in history.`,
       [
         { text: 'Not now', style: 'cancel' },
         {
           text: 'Start new week',
           onPress: async () => {
-            const updatedChild = await allowanceService.closeWeek(selectedChild.id);
-            setChildren((prev) =>
-              prev.map((child) => (child.id === updatedChild.id ? updatedChild : child)),
-            );
+            try {
+              const updatedChild = await allowanceService.closeWeek(child.id);
+              setChildren((prev) =>
+                prev.map((item) => (item.id === updatedChild.id ? updatedChild : item)),
+              );
+
+              const message = formatWeekCloseShareMessage({
+                childName: child.name,
+                startedAt,
+                endedAt: updatedChild.weekStartedAt,
+                weeklyStartingAmount: child.weeklyStartingAmount,
+                endingBalance,
+                entries: weekSnapshot,
+              });
+
+              Alert.alert(
+                'Week closed',
+                `${child.name} finished at ${formatMoney(endingBalance)}. Share a summary with the other parent?`,
+                [
+                  { text: 'Not now', style: 'cancel' },
+                  {
+                    text: 'Share summary',
+                    onPress: () => {
+                      void Share.share({ message });
+                    },
+                  },
+                ],
+              );
+            } catch (error) {
+              Alert.alert(
+                'Error',
+                error instanceof Error ? error.message : 'Could not start a new week.',
+              );
+            }
           },
         },
       ],
     );
-  }, [selectedChild]);
+  }, [selectedChild, currentWeekEntries, balance]);
 
   const handleQuickLog = useCallback(
     async (suggestion: EntrySuggestion) => {

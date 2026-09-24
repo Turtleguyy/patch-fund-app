@@ -1,5 +1,7 @@
 import { LedgerEntry } from '../models/LedgerEntry';
 import { WeekHistoryItem, WeekSummary } from '../models/WeekSummary';
+import { formatMoney } from './formatMoney';
+import { formatSuggestionAmount } from './entrySuggestions';
 
 export function getCurrentWeekEntries<T extends { createdAt: string }>(
   entries: T[],
@@ -17,6 +19,37 @@ export function calculateWeeklyBalance(
 ): number {
   const deltaSum = entries.reduce((sum, entry) => sum + entry.amountDelta, 0);
   return weeklyStartingAmount + deltaSum;
+}
+
+/** Plain-text week wrap-up for Messages / share sheet. */
+export function formatWeekCloseShareMessage(input: {
+  childName: string;
+  startedAt: string;
+  endedAt: string;
+  weeklyStartingAmount: number;
+  endingBalance: number;
+  entries: Pick<LedgerEntry, 'amountDelta' | 'reason' | 'createdAt'>[];
+}): string {
+  const { childName, startedAt, endedAt, weeklyStartingAmount, endingBalance, entries } = input;
+  const lines = [
+    `${childName}'s week · ${formatWeekRange(startedAt, endedAt)}`,
+    `Final: ${formatMoney(endingBalance)} (started at ${formatMoney(weeklyStartingAmount)})`,
+  ];
+
+  if (entries.length > 0) {
+    lines.push('');
+    const chronological = [...entries].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+    for (const entry of chronological) {
+      lines.push(`${formatSuggestionAmount(entry.amountDelta)} · ${entry.reason.trim()}`);
+    }
+  } else {
+    lines.push('', 'No additions or takes this week.');
+  }
+
+  lines.push('', '— Patch Fund');
+  return lines.join('\n');
 }
 
 function getMondayWeekStart(date: Date): Date {
